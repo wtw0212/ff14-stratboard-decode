@@ -195,3 +195,77 @@ Format: `02 00 [TYPE_ID] 00` (4 bytes per object)
 | ID (Dec) | ID (Hex) | Name |
 | :---: | :---: | :--- |
 | 100 | 0x64 | Text |
+
+---
+
+## 7. Binary Block Structure
+
+Strategy codes use a block-based binary format. Each block follows the pattern:
+```
+[BLOCK_ID] 00 [SUB_TYPE] 00 [COUNT] 00 [DATA...]
+```
+
+### Block ID Reference
+
+| Block ID | Sub Type | Name | Data Format | Description |
+| :---: | :---: | :--- | :--- | :--- |
+| 02 | [TYPE] | Object Type | 4 bytes per type | Object type metadata |
+| 04 | 01 | Layer Info | 2 bytes | Layer/ordering data |
+| 05 | 03 | Coord Header | 2 bytes count | Marks start of coordinates |
+| 06 | 01 | Angle Block | int16 per object | Rotation angles |
+| 07 | 00 | Size Block | uint8 per object | Object sizes (50-200) |
+| 08 | 02 | Transparency | 4 bytes per object | RGBA values |
+| 0A | 01 | Param A | 2 bytes per object | Type-specific param 1 |
+| 0B | 01 | Param B | 2 bytes per object | Type-specific param 2 |
+| 0C | 01 | Param C | 2 bytes per object | Type-specific param 3 |
+| 03 | 01 | Footer | 2 bytes | End marker |
+
+### Single Object Code Layout (112 bytes)
+
+```
+[0-3]    Header: 02 00 00 00 (Magic/Version)
+[4-7]    Total Size: uint32
+[8-17]   Reserved: zeros
+[18-19]  Content Size: uint16
+[20-25]  Object Count + padding
+[26-27]  Title Length: uint16
+[28-N]   Title: UTF-8 + null terminator
+
+[N+0]    02 00 [TYPE] 00     Object Type
+[N+4]    04 00 01 00 ...     Layer info
+[N+12]   05 00 03 00 [COUNT] Coord header
+[N+18]   [X1][Y1]...         Coordinates (int16 pairs, ×10)
+
+[~54]    06 00 01 00 [COUNT] Angle block
+[~62]    07 00 00 00 [COUNT] Size block
+[~70]    08 00 02 00 [COUNT] Transparency block
+
+[~80]    0A 00 01 00 [COUNT] Param A block (Arc/Width)
+[~88]    0B 00 01 00 [COUNT] Param B block (Height/Radius)
+[~96]    0C 00 01 00 [COUNT] Param C block
+[~104]   03 00 01 00 [COUNT] Footer
+```
+
+### Type-Specific Parameter Mapping
+
+| Object Type | Param A (Block 0A) | Param B (Block 0B) |
+| :--- | :--- | :--- |
+| Fan AOE | Arc Angle (1-360°) | Unused (0) |
+| Donut AOE | Arc Angle (360° default) | Inner Radius |
+| Line AOE | Width (min 16) | Height |
+| Circle AOE | Unused | Unused |
+
+### Text Object Special Structure
+
+Text objects store content inline in metadata:
+```
+02 00 64 00              Object Type (Text)
+03 00 [LEN] 00 [STRING]  Variable-length UTF-8 content
+```
+
+### Multi-Object Strategies
+
+In strategies with N objects:
+- Each parameter block contains N values
+- Block offsets shift based on title length and object count
+- Use signatures (05 00 03 00, 07 00 00 00, etc.) to locate blocks
