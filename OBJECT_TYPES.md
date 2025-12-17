@@ -93,3 +93,29 @@ These IDs correspond to the values found in the `JOB-MAPPING` or `ATTACK-TYPES-M
 | **11** | 0x0B | Fan AOE | AOE | Params: Arc |
 | **10** | 0x0A | Circle AOE | AOE | |
 | **9** | 0x09 | General Marker | Marker | |
+
+## Extended Parameter Blocks
+
+Objects with custom properties (Size, Angle, Transparency) store these in dedicated blocks **after** the coordinate data. These follow a Type-Length-Value (TLV) concept but use fixed headers.
+
+### Type 6 Block: Angle
+- **Header**: `06 00 01 00 [Count 2B]`
+- **Format**: `int16` (2 bytes, Little Endian) per object.
+- **Range**: 0-360 (degrees).
+- **Data Start**: Header Offset + 6.
+
+### Type 7 Block: Size
+- **Header**: `07 00 00 00 [Count 2B]`
+- **Format**: `byte` (1 byte) per object.
+- **Range**: 0-255 (100 = default size).
+- **Data Start**: Header Offset + 6.
+
+### Type 8 Block: Color/Transparency
+- **Header**: `08 00 02 00 [Count 2B]`
+- **Format**: 4 bytes per object (`[R] [G] [B] [Alpha]`).
+- **Data Start**: Header Offset + 6.
+- **Values**:
+  - **R, G, B**: Indexes 0-2. Typically `255 255 255` (White).
+  - **Alpha (Transparency)**: Index 3. 
+    - `0`: Default (Opaque, or not set?).
+    - `1-100`: Transparency percentage.

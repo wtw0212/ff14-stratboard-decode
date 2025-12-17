@@ -1,242 +1,256 @@
 """
-FF14 Strategy Code Library
-==========================
-
-A Python library for encoding and decoding FF14 Strategy Board codes.
+FF14 Strategy Board Codec
+=========================
+A comprehensive library for decoding, analyzing, modifying, and encoding 
+Final Fantasy XIV Strategy Board codes.
 
 Features:
-- Decode strategy codes to binary data
-- Encode binary data to strategy codes
-- Modify coordinates in existing strategies
+- Decode/Encode strategy strings (Zlib + Custom Cipher).
+- Object Management: Parse positions, types, and metadata.
+- Extended Parameters: Handle Size, Angle, and Transparency.
 
-Key Discovery:
-- Prefix is "stgy:a" (6 chars) - 'a' is version identifier
-- Coordinates stored as int16 * 10 (e.g., x=150 stored as 1500)
-
-Usage:
-    from ff14_strategy import decode_strategy, encode_strategy
-
-    # Decode
-    binary_data = decode_strategy("[stgy:aXXXX...]")
-
-    # Encode
-    code = encode_strategy(binary_data)
-
-Author: Reverse-engineered from FF14 game client
+Author: wtw0212
+License: MIT
 """
 
+import zlib
 import base64
 import struct
-import zlib
-from typing import Tuple, List, Dict, Optional
 
-# Substitution table from game (address 0x1420cf4a0, 256 bytes)
-_SUBSTITUTION_TABLE = bytes([
-    # ENC table (bytes 0-127) - for encoding
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x62,0x00,0x00,
-    0x32,0x77,0x37,0x71,0x53,0x74,0x45,0x56,0x34,0x50,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x66,0x52,0x65,0x41,0x46,0x42,0x75,0x64,0x6b,0x36,0x33,0x4b,0x4c,0x2b,0x59,
-    0x2d,0x7a,0x54,0x35,0x44,0x6e,0x48,0x68,0x51,0x55,0x39,0x00,0x00,0x00,0x00,0x57,
-    0x00,0x47,0x5a,0x49,0x6a,0x4e,0x72,0x31,0x6d,0x61,0x4f,0x70,0x6f,0x4d,0x58,0x69,
-    0x4a,0x6c,0x67,0x38,0x43,0x78,0x63,0x76,0x30,0x73,0x79,0x00,0x00,0x00,0x00,0x00,
-    # DEC table (bytes 128-255) - for decoding
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x4e,0x00,0x50,0x00,0x00,
-    0x78,0x67,0x30,0x4b,0x38,0x53,0x4a,0x32,0x73,0x5a,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x44,0x46,0x74,0x54,0x36,0x45,0x61,0x56,0x63,0x70,0x4c,0x4d,0x6d,0x65,0x6a,
-    0x39,0x58,0x42,0x34,0x52,0x59,0x37,0x5f,0x6e,0x4f,0x62,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x69,0x2d,0x76,0x48,0x43,0x41,0x72,0x57,0x6f,0x64,0x49,0x71,0x68,0x55,0x6c,
-    0x6b,0x33,0x66,0x79,0x35,0x47,0x77,0x31,0x75,0x7a,0x51,0x00,0x00,0x00,0x00,0x00,
-])
+# --- Constants ---
 
+# Substitution table derived from game memory
+_SUBSTITUTION_TABLE = [
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2e, 0x00, 0x2d, 0x00, 0x00, 0x00,
+    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
+    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x00, 0x5f, 0x00, 0x00, 0x00,
+    0x00, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
+    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+]
 
-def _char_to_value(c: str) -> int:
-    """Convert Base64 character to 6-bit value."""
-    o = ord(c)
-    if 65 <= o <= 90:    return o - 65      # A-Z -> 0-25
-    if 97 <= o <= 122:   return o - 71      # a-z -> 26-51
-    if 48 <= o <= 57:    return o + 4       # 0-9 -> 52-61
-    if c == '-':         return 62
-    if c == '_':         return 63
-    return 0
+def _char_to_value(c):
+    return _SUBSTITUTION_TABLE[ord(c)]
 
+def _value_to_char(v):
+    for i in range(256):
+        if _SUBSTITUTION_TABLE[i] == v:
+            if 0x30 <= i <= 0x39 or 0x41 <= i <= 0x5A or 0x61 <= i <= 0x7A or i == 0x2d or i == 0x5f:
+                return chr(i)
+    return 'A' 
 
-def _value_to_char(v: int) -> str:
-    """Convert 6-bit value to Base64 character."""
-    v &= 0x3f
-    if v < 26:   return chr(65 + v)         # 0-25 -> A-Z
-    if v < 52:   return chr(97 + v - 26)    # 26-51 -> a-z
-    if v < 62:   return chr(48 + v - 52)    # 52-61 -> 0-9
-    return '-' if v == 62 else '_'
+def _substitute_encode(base64_str, seed):
+    standard_b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    output = []
+    for i, char in enumerate(base64_str):
+        if char == '-': char = '+'
+        if char == '_': char = '/'
+        val = standard_b64.index(char)
+        enc_val = (val + seed + i) & 0x3F
+        res_char = _value_to_char(enc_val)
+        output.append(res_char)
+    return "".join(output)
 
+# --- Core Functions ---
 
-def _substitute_encode(c: str) -> str:
-    """Apply ENC substitution table."""
-    idx = ord(c)
-    if idx < 128 and _SUBSTITUTION_TABLE[idx] != 0:
-        return chr(_SUBSTITUTION_TABLE[idx])
-    return c
-
-
-def _substitute_decode(c: str) -> str:
-    """Apply DEC substitution table."""
-    idx = ord(c)
-    if idx < 128 and _SUBSTITUTION_TABLE[128 + idx] != 0:
-        return chr(_SUBSTITUTION_TABLE[128 + idx])
-    return c
-
-
-def decode_strategy(stgy_code: str) -> bytes:
-    """
-    Decode FF14 strategy code to binary data.
-
-    Args:
-        stgy_code: Strategy code in format "[stgy:aXXXX...]"
-
-    Returns:
-        Decoded binary data
-
-    Raises:
-        ValueError: If CRC check fails or format is invalid
-    """
-    # Remove wrapper - prefix is "stgy:a" (6 chars)
-    code = stgy_code.replace('[stgy:a', '').rstrip(']')
-
-    # Step 1: Apply DEC substitution
-    substituted = ''.join(_substitute_decode(c) for c in code)
-
-    # Step 2: Extract seed from first char
-    seed = _char_to_value(substituted[0])
-
-    # Step 3: Deobfuscate remaining chars
-    deobfuscated = []
-    for i, char in enumerate(substituted[1:]):
-        val = _char_to_value(char)
-        new_val = (val - i - seed) & 0x3f
-        deobfuscated.append(_value_to_char(new_val))
-    deob_str = ''.join(deobfuscated)
-
-    # Step 4: Base64 decode (URL-safe to standard)
-    b64 = deob_str.replace('-', '+').replace('_', '/')
-    while len(b64) % 4:
-        b64 += '='
-    raw = base64.b64decode(b64)
-
-    # Step 5: Parse and verify
-    crc_stored = struct.unpack('<I', raw[0:4])[0]
-    crc_calc = zlib.crc32(raw[4:]) & 0xffffffff
-
-    if crc_stored != crc_calc:
-        raise ValueError(f"CRC mismatch: stored=0x{crc_stored:08x}, calc=0x{crc_calc:08x}")
-
-    # Step 6: Decompress
-    return zlib.decompress(raw[6:])
-
-
-def encode_strategy(binary_data: bytes, seed: int = 10) -> str:
-    """
-    Encode binary data to FF14 strategy code.
-
-    Args:
-        binary_data: Binary data to encode
-        seed: Obfuscation seed (0-63), default 10
-
-    Returns:
-        Strategy code in format "[stgy:aXXXX...]"
-    """
-    # Step 1: Compress (Level 6 matches game's 78 9c header)
-    compressed = zlib.compress(binary_data, 6)
-
-    # Step 2: Build raw: [CRC32][length][compressed]
-    length = len(binary_data)
-    payload = struct.pack('<H', length) + compressed
-    crc = zlib.crc32(payload) & 0xffffffff
-    raw = struct.pack('<I', crc) + payload
-
-    # Step 3: Base64 encode (standard to URL-safe)
-    b64 = base64.b64encode(raw).decode().rstrip('=')
-    b64 = b64.replace('+', '-').replace('/', '_')
-
-    # Step 4: Obfuscate: (val + index + seed) & 0x3f
-    obfuscated = []
-    for i, c in enumerate(b64):
-        val = _char_to_value(c)
-        new_val = (val + i + seed) & 0x3f
-        obfuscated.append(_value_to_char(new_val))
-    obf_str = ''.join(obfuscated)
-
-    # Step 5: Apply ENC substitution
-    substituted = ''.join(_substitute_encode(c) for c in obf_str)
-
-    # Step 6: Add seed char (with ENC substitution)
-    seed_char = _value_to_char(seed)
-    seed_sub = _substitute_encode(seed_char)
-
-    return f"[stgy:a{seed_sub}{substituted}]"
-
-
-def modify_coordinates(stgy_code: str, coord_index: int, x: float, y: float) -> str:
-    """
-    Modify coordinates in a strategy code.
-
-    Args:
-        stgy_code: Original strategy code
-        coord_index: Which coordinate pair to modify (0-based)
-        x: New X coordinate
-        y: New Y coordinate
-
-    Returns:
-        New strategy code with modified coordinates
-
-    Note:
-        Coordinate offset is approximately 56 + (coord_index * 4) bytes
-        Coordinates are stored as int16 * 10
-    """
-    data = bytearray(decode_strategy(stgy_code))
-
-    # Coordinate offset (this may vary based on strategy structure)
-    offset = 56 + (coord_index * 4)
-
-    if offset + 4 > len(data):
-        raise ValueError(f"Coordinate index {coord_index} out of range")
-
-    # Store as int16 * 10
-    data[offset:offset+2] = struct.pack('<h', int(x * 10))
-    data[offset+2:offset+4] = struct.pack('<h', int(y * 10))
-
-    return encode_strategy(bytes(data))
-
-
-# =============================================================================
-# Demo
-# =============================================================================
-if __name__ == "__main__":
-    print("FF14 Strategy Code Library")
-    print("=" * 60)
-
-    # Test decode
-    test_code = "[stgy:aK+3JkUa050jutcbGEWaNN1A5ed+gXkFCEPct0Be0Ey2DYqbB]"
-    print(f"\nTest decode:")
-    print(f"  Input: {test_code[:40]}...")
+def decode_strategy(strategy_string: str) -> bytes:
+    """Decodes a strategy string into its raw binary form."""
+    if not strategy_string.startswith("[stgy:"):
+        raise ValueError("Invalid prefix")
+    
+    content = strategy_string[6:-1]
+    if not content: return b""
+    
+    inner = strategy_string[1:-1]
+    parts = inner.split(':')
+    if len(parts) < 2: return b""
+    
+    payload = parts[1]
+    seed_char = payload[0]
+    seed = _char_to_value(seed_char)
+    data_chars = payload[1:]
+    
+    decoded_indices = []
+    for i, char in enumerate(data_chars):
+        raw = _char_to_value(char)
+        val = (raw - seed - (i + 1)) & 0x3F
+        decoded_indices.append(val)
+        
+    b64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    b64_string = "".join(b64_chars[x] for x in decoded_indices)
+    
+    rem = len(b64_string) % 4
+    if rem > 0:
+        b64_string += "=" * (4 - rem)
+        
+    compressed_data = base64.urlsafe_b64decode(b64_string)
+    
     try:
-        data = decode_strategy(test_code)
-        print(f"  Output: {len(data)} bytes")
-        print(f"  Hex: {data.hex()[:60]}...")
-    except Exception as e:
-        print(f"  Error: {e}")
+        decompressed = zlib.decompress(compressed_data)
+    except:
+        decompressed = zlib.decompress(compressed_data, -15)
+        
+    return decompressed
 
-    # Test encode
-    print(f"\nTest round-trip:")
-    try:
-        re_encoded = encode_strategy(data)
-        re_decoded = decode_strategy(re_encoded)
-        match = data == re_decoded
-        print(f"  Round-trip: {'SUCCESS' if match else 'FAILED'}")
-    except Exception as e:
-        print(f"  Error: {e}")
+def encode_strategy(binary_data: bytes) -> str:
+    """Encodes binary data into a strategy string."""
+    compressed = zlib.compress(binary_data, level=6)
+    b64_bytes = base64.urlsafe_b64encode(compressed)
+    b64_str = b64_bytes.decode('ascii').replace('=', '')
+    
+    seed_char = 'a'
+    seed = _char_to_value(seed_char)
+    
+    obfuscated = [seed_char]
+    standard_b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    
+    for i, char in enumerate(b64_str):
+        if char == '-': idx = 62
+        elif char == '_': idx = 63
+        else: idx = standard_b64.index(char)
+        
+        enc_val = (idx + seed + (i + 1)) & 0x3F
+        out_char = _value_to_char(enc_val)
+        obfuscated.append(out_char)
+        
+    payload = "".join(obfuscated)
+    return f"[stgy:{payload}]"
 
-    print("\n" + "=" * 60)
-    print("Library ready for use!")
+# --- Strategy Class ---
+
+class StrategyObject:
+    """Represents a single object in the strategy."""
+    def __init__(self, idx, strategy):
+        self.index = idx
+        self.strategy = strategy
+        self.x = 0.0
+        self.y = 0.0
+        self.type_id = 0
+        self.subtype_id = 0
+        self.data_id = 0
+        self.size = 100
+        self.angle = 0
+        self.transparency = 0
+        self.color = (255, 255, 255)
+
+class Strategy:
+    """High-level class for parsing and manipulating strategy codes."""
+    def __init__(self, code: str):
+        self.original_binary = bytearray(decode_strategy(code))
+        self.objects = []
+        self._parse()
+        
+    def _find_block(self, data, sig):
+        return data.find(sig)
+
+    def _parse(self):
+        data = self.original_binary
+        
+        # Locate extended parameter blocks
+        self.angle_offset = self._find_block(data, b'\x06\x00\x01\x00')
+        self.size_offset = self._find_block(data, b'\x07\x00\x00\x00')
+        self.trans_offset = self._find_block(data, b'\x08\x00\x02\x00')
+        
+        # Determine object count
+        count = 0
+        if self.size_offset != -1:
+            count = struct.unpack('<H', data[self.size_offset+4:self.size_offset+6])[0]
+        elif self.angle_offset != -1:
+            count = struct.unpack('<H', data[self.angle_offset+4:self.angle_offset+6])[0]
+        
+        if count == 0:
+            # Fallback estimation based on file size and structure
+            est_n = (len(data) - 52 - 6) // 10
+            count = max(1, est_n) 
+            
+        self.num_objects = count
+        
+        # Metadata typically starts after the header (offset 52)
+        self.meta_start = 52
+        self.coord_start = self.meta_start + (count * 6)
+        
+        # Populate objects
+        for i in range(count):
+            obj = StrategyObject(i, self)
+            
+            # Metadata parsing
+            m_off = self.meta_start + i*6
+            if m_off + 6 <= len(data):
+                obj.type_id = struct.unpack('<H', data[m_off:m_off+2])[0]
+                obj.subtype_id = struct.unpack('<H', data[m_off+2:m_off+4])[0]
+                obj.data_id = struct.unpack('<H', data[m_off+4:m_off+6])[0]
+            
+            # Coordinate parsing
+            c_off = self.coord_start + i*4
+            if c_off + 4 <= len(data):
+                vx = struct.unpack('<h', data[c_off:c_off+2])[0]
+                vy = struct.unpack('<h', data[c_off+2:c_off+4])[0]
+                obj.x = vx / 10.0
+                obj.y = vy / 10.0
+            
+            # Extended parameters: Size (Type 7)
+            if self.size_offset != -1:
+                s_idx = self.size_offset + 6 + i
+                if s_idx < len(data):
+                    obj.size = data[s_idx]
+            
+            # Extended parameters: Angle (Type 6)
+            if self.angle_offset != -1:
+                a_idx = self.angle_offset + 6 + i*2
+                if a_idx+2 <= len(data):
+                    obj.angle = struct.unpack('<H', data[a_idx:a_idx+2])[0]
+            
+            # Extended parameters: Transparency/Color (Type 8)
+            if self.trans_offset != -1:
+                t_idx = self.trans_offset + 6 + i*4
+                if t_idx+4 <= len(data):
+                    obj.transparency = data[t_idx+3]
+                    obj.color = (data[t_idx], data[t_idx+1], data[t_idx+2])
+            
+            self.objects.append(obj)
+
+    def to_code(self):
+        """Reconstructs and encodes the strategy."""
+        data = self.original_binary
+        
+        for i, obj in enumerate(self.objects):
+            # Update Coordinates
+            c_off = self.coord_start + i*4
+            if c_off + 4 <= len(data):
+                vx = int(obj.x * 10)
+                vy = int(obj.y * 10)
+                data[c_off:c_off+2] = struct.pack('<h', vx)
+                data[c_off+2:c_off+4] = struct.pack('<h', vy)
+            
+            # Update Metadata
+            m_off = self.meta_start + i*6
+            if m_off + 6 <= len(data):
+                data[m_off:m_off+2] = struct.pack('<H', obj.type_id)
+                data[m_off+2:m_off+4] = struct.pack('<H', obj.subtype_id)
+                data[m_off+4:m_off+6] = struct.pack('<H', obj.data_id)
+                
+            # Update Extended Parameters
+            if self.size_offset != -1:
+                 data[self.size_offset + 6 + i] = int(obj.size)
+                 
+            if self.angle_offset != -1:
+                 data[self.angle_offset + 6 + i*2 : self.angle_offset + 6 + i*2 + 2] = struct.pack('<H', int(obj.angle))
+                 
+            if self.trans_offset != -1:
+                 t_idx = self.trans_offset + 6 + i*4
+                 data[t_idx+3] = int(obj.transparency)
+                 data[t_idx] = obj.color[0]
+                 data[t_idx+1] = obj.color[1]
+                 data[t_idx+2] = obj.color[2]
+                 
+        return encode_strategy(bytes(data))
