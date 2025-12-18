@@ -75,9 +75,9 @@ Format: `02 00 [TYPE_ID] 00` (4 bytes per object)
 | ID (Dec) | ID (Hex) | Name | Category | Notes |
 | :---: | :---: | :--- | :--- | :--- |
 | 1 | 0x01 | Line AOE | AOE | Params: H, W |
-| 9 | 0x09 | General Marker | Marker | |
-| 10 | 0x0A | Circle AOE | AOE | |
-| 11 | 0x0B | Fan AOE | AOE | Params: Arc |
+| 9 | 0x09 | Circle AOE | AOE | ✅ 已驗證 |
+| 10 | 0x0A | Fan AOE | AOE | Params: Arc ✅ 已驗證 |
+| 11 | 0x0B | General Marker | Marker | |
 | 13 | 0x0D | Gaze | Mechanic | |
 | 14 | 0x0E | Stack | Marker | |
 | 15 | 0x0F | Line Stack | Marker | |
@@ -269,3 +269,19 @@ In strategies with N objects:
 - Each parameter block contains N values
 - Block offsets shift based on title length and object count
 - Use signatures (05 00 03 00, 07 00 00 00, etc.) to locate blocks
+
+---
+
+## 8. Background Types
+
+Background type is stored at **Offset 126** in single-object codes (128 bytes).
+
+| Value | Background Type |
+| :---: | :--- |
+| 0x01 | None (Blank) |
+| 0x02 | Checkered |
+| 0x03 | Checkered Circle |
+| 0x04 | Checkered Square |
+| 0x05 | Grey |
+| 0x06 | Grey Circular |
+| 0x07 | Grey Square |
