@@ -75,8 +75,8 @@ Format: `02 00 [TYPE_ID] 00` (4 bytes per object)
 | ID (Dec) | ID (Hex) | Name | Category | Notes |
 | :---: | :---: | :--- | :--- | :--- |
 | 1 | 0x01 | Line AOE | AOE | Params: H, W |
-| 9 | 0x09 | Circle AOE | AOE | ✅ 已驗證 |
-| 10 | 0x0A | Fan AOE | AOE | Params: Arc ✅ 已驗證 |
+| 9 | 0x09 | Circle AOE | AOE | [Verified] |
+| 10 | 0x0A | Fan AOE | AOE | Params: Arc [Verified] |
 | 11 | 0x0B | General Marker | Marker | |
 | 13 | 0x0D | Gaze | Mechanic | |
 | 14 | 0x0E | Stack | Marker | |
