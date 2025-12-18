@@ -1,0 +1,9 @@
+Light Party Composition:
+- Tank: Gunbreaker
+- Healer: Sage
+- DPS 1: Dragoon
+- DPS 2: Black Mage
+- Circle AOE in center
+
+Code:
+[stgy:a3-s6vvI1TvIBEtVIO3bICc2Ndi20k96lO2IPX5TlC5H7jLyrWm-ZXlrr0LYtLqL6je8VKbHIJzDITnC8AzLI76+P8UFGyDNtvp8CX-0Xyt9EeXTETCCI31MNpJmTCwjqLTUt+8G0Mfl+u7NmDE-tCEK91pfV4-h0RkuVmLcwBSppz]

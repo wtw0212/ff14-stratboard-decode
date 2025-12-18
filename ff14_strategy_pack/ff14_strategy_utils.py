@@ -7,7 +7,7 @@ object size, angle, and transparency.
 Dependencies: ff14_strategy.py (decode_strategy, encode_strategy)
 """
 import struct
-from ff14_strategy import decode_strategy, encode_strategy
+from .ff14_strategy import decode_strategy, encode_strategy
 
 
 # ============================================================================

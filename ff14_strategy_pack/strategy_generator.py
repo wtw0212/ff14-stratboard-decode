@@ -6,7 +6,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.join(os.getcwd(), 'ff14_strategy_pack'))
-from ff14_strategy import encode_strategy
+from .ff14_strategy import encode_strategy
 
 TYPES = {
     # Generic roles

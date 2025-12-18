@@ -4,9 +4,11 @@ FF14 Strategy Code Decoder
 Decodes strategy codes and displays contents including title, object types, and coordinates.
 Uses ff14_strategy_utils for coord detection and ff14_strategy for encoding/decoding.
 """
-import struct
-from ff14_strategy import decode_strategy
-from ff14_strategy_utils import find_coord_block
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from ff14_strategy_pack.ff14_strategy import decode_strategy
+from ff14_strategy_pack.ff14_strategy_utils import find_coord_block
 
 TYPE_NAMES = {
     0x01: "Line AOE", 0x04: "Checkered Circle", 0x08: "Checkered Square",

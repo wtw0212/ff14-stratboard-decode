@@ -7,8 +7,8 @@ import random
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.getcwd(), 'ff14_strategy_pack'))
-from strategy_generator import generate_strategy
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from ff14_strategy_pack.strategy_generator import generate_strategy
 
 # Job pools
 TANKS = ["paladin", "warrior", "dark_knight", "gunbreaker"]

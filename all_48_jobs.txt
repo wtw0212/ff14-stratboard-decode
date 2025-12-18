@@ -1,0 +1,14 @@
+All 48 Job Icons Strategy Board
+Total: 48 objects
+
+Row 1: Paladin, Warrior, Dark Knight, Gunbreaker
+Row 2: White Mage, Scholar, Astrologian, Sage
+Row 3: Monk, Dragoon, Ninja, Samurai, Reaper, Viper
+Row 4: Bard, Machinist, Dancer
+Row 5: Black Mage, Summoner, Red Mage, Pictomancer, Blue Mage
+Row 6: Gladiator, Pugilist, Marauder, Lancer, Archer, Conjurer, Thaumaturge, Arcanist, Rogue
+Row 7: Tank, Tank 1, Tank 2, Healer, Healer 1, Healer 2, DPS, DPS 1, DPS 2, DPS 3, DPS 4
+Row 8: Melee DPS, Ranged DPS, Phys Ranged, Magic Ranged, Pure Healer, Barrier Healer
+
+Code:
+[stgy:a3ZKZqE3zHvIdlE5BdN-1wWEIGvN0A9BZAeuDLR3D2sDLdSffnzm-nJaIApooQkJUTuKn6YDt4ifySXY91kK9rURhCVigwEDSVmi0LHP9tA0zLsAdgWStn0iA21leFwerIJeGPLWHeUlUlsXq3NimpHOyPy7HgPgCBEijcoy4CeNoS+VQHK1YBFqmYy3V6pAULZDvB0asn1Zf+q3EikONHfleofg8Pxv1KT+sK7lkRignLUfhRRQLicArBKWnMblQgL6nSDVITx-jdrQ3R+iCT8nCn6XmsEZm7AdB7ZaPWHaRMl1KIObuloIcQBxDZTgT2ZuAOZwo4Ium15sM+p0tuq0VEu4T6pgYrrpmTReQE4mR0j39SyFc42hFrPewVR7tXW3y7cbjNLlBExuEb1J2DWK8HA6iVMGacVA-YF1q2I2DSXmIT1NuAv8Dutzr35T7nZoxUaJLWSbIA34CvO-zppxOQJr6VSIkQ-lga83FotfYdGm2NAGOvhG4eR9ViZq]

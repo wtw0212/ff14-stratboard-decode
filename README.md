@@ -39,8 +39,9 @@ The library utilizes only standard Python libraries (`zlib`, `base64`, `struct`)
 ### Example: Generating a Strategy
 ```python
 import sys
-sys.path.insert(0, 'ff14_strategy_pack')
-from strategy_generator import generate_strategy
+import os
+sys.path.append(os.path.abspath('ff14_strategy_pack'))
+from ff14_strategy_pack.strategy_generator import generate_strategy
 
 # Generate a Light Party with Circle AOE
 objects = [
@@ -56,7 +57,7 @@ print(code)
 
 ### Example: Decoding a Strategy
 ```python
-from ff14_strategy import decode_strategy
+from ff14_strategy_pack.ff14_strategy import decode_strategy
 
 # Step 1: Decode the strategy string to binary
 strategy_code = "[stgy:a...]"
@@ -70,7 +71,7 @@ print(f"Strategy Version: {version}")
 
 ### Example: Modifying Coordinates
 ```python
-from ff14_strategy import modify_coordinates
+from ff14_strategy_pack.ff14_strategy import modify_coordinates
 
 # Move the first object (index 0) to coordinates (100.0, 100.0)
 original_code = "[stgy:a...]"
@@ -99,12 +100,12 @@ This project represents the foundational layer of a broader initiative to enable
 
 ### Phase 2: Object Type Quantification [Completed]
 - [x] Identification of the metadata block structure (Type ID locations).
-- [x] Comprehensive mapping of all available Type IDs (see `OBJECT_TYPES.md`).
+- [x] Comprehensive mapping of all available Type IDs (see `docs/OBJECT_TYPES.md`).
 - [x] Analysis of auxiliary data fields within the metadata block.
-- [x] Color palette mapping (see `ColourPalette.md`).
+- [x] Color palette mapping (see `docs/ColourPalette.md`).
 
 ### Phase 3: Strategy Generation [Completed]
-- [x] Implementation of `strategy_generator.py` for programmatic code generation.
+- [x] Implementation of `ff14_strategy_pack/strategy_generator.py` for programmatic code generation.
 - [x] Support for custom colors (RGB tuple or palette lookup).
 - [x] Verified generation of 50+ object strategies.
 - [x] 4-byte title alignment fix for reliable code generation.
