@@ -1,6 +1,6 @@
 import React from 'react';
 import { MarkerArrow } from '../prefabs/Arrow';
-import { EnemyCircle, EnemyHuge, EnemyLarge, EnemyMedium, EnemySmall } from '../prefabs/Enemies';
+import { EnemyLarge, EnemyMedium, EnemySmall } from '../prefabs/Enemies';
 import { Waymark1, Waymark2, Waymark3, Waymark4, WaymarkA, WaymarkB, WaymarkC, WaymarkD } from '../prefabs/Markers';
 import {
     PartyAny,
@@ -157,11 +157,9 @@ export const PrefabsPanel: React.FC = () => {
 
             <Section title="Enemies">
                 <ObjectGroup>
-                    <EnemyCircle />
                     <EnemySmall />
                     <EnemyMedium />
                     <EnemyLarge />
-                    <EnemyHuge />
                 </ObjectGroup>
             </Section>
             {/* Tethers removed - not supported in game */}

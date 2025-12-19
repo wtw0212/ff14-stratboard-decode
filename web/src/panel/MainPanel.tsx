@@ -3,13 +3,12 @@ import React, { useState } from 'react';
 import { EditMode } from '../editMode';
 import { TabActivity } from '../TabActivity';
 import { useEditMode } from '../useEditMode';
-import { ArenaPanel } from './ArenaPanel';
 import { DrawPanel } from './DrawPanel';
 import { PANEL_WIDTH } from './PanelStyles';
 import { PrefabsPanel } from './PrefabsPanel';
 import { StatusPanel } from './StatusPanel';
 
-type Tabs = 'arena' | 'objects' | 'status' | 'draw';
+type Tabs = 'objects' | 'status' | 'draw';
 
 export const MainPanel: React.FC = () => {
     const classes = useStyles();
@@ -28,15 +27,11 @@ export const MainPanel: React.FC = () => {
     return (
         <div className={classes.wrapper}>
             <TabList selectedValue={tab} onTabSelect={(ev, data) => handleTabChanged(data.value as Tabs)}>
-                <Tab value="arena">Arena</Tab>
                 <Tab value="objects">Objects</Tab>
                 <Tab value="status">Icons</Tab>
                 <Tab value="draw">Draw</Tab>
             </TabList>
             <div className={classes.container}>
-                <TabActivity value="arena" activeTab={tab}>
-                    <ArenaPanel />
-                </TabActivity>
                 <TabActivity value="objects" activeTab={tab}>
                     <PrefabsPanel />
                 </TabActivity>

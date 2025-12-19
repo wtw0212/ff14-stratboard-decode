@@ -429,13 +429,24 @@ function convertObject(
 
     if (isEnemy(obj)) {
         const enemy = obj as EnemyObject;
-        // Map enemy size to game type
-        if (enemy.radius <= 20) {
+        // Map enemy type based on image name or size
+        const imageName = enemy.image?.toLowerCase() || '';
+        if (imageName.includes('small')) {
             gameObj.typeId = GAME_TYPES.enemy_small;
-        } else if (enemy.radius <= 40) {
+        } else if (imageName.includes('medium')) {
             gameObj.typeId = GAME_TYPES.enemy_medium;
-        } else {
+        } else if (imageName.includes('large')) {
             gameObj.typeId = GAME_TYPES.enemy_large;
+        } else {
+            // Default based on width: small <= 32, medium <= 48, large > 48
+            const size = enemy.width ?? 32;
+            if (size <= 32) {
+                gameObj.typeId = GAME_TYPES.enemy_small;
+            } else if (size <= 48) {
+                gameObj.typeId = GAME_TYPES.enemy_medium;
+            } else {
+                gameObj.typeId = GAME_TYPES.enemy_large;
+            }
         }
         return gameObj;
     }

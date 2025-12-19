@@ -229,16 +229,16 @@ export interface PartyObject extends ImageObject, NamedObject, BaseObject {
 }
 export const isParty = makeObjectTest<PartyObject>(ObjectType.Party);
 
+// EnemyRingStyle kept for backwards compatibility with old scenes
 export enum EnemyRingStyle {
     NoDirection = 'none',
     Directional = 'dir',
     Omnidirectional = 'omni',
 }
 
-export interface EnemyObject extends RadiusObject, RotateableObject, NamedObject, ColoredObject, BaseObject {
+// Enemy now uses same image-based rendering as Party
+export interface EnemyObject extends ImageObject, NamedObject, BaseObject {
     readonly type: ObjectType.Enemy;
-    readonly icon: string;
-    readonly ring: EnemyRingStyle;
 }
 export const isEnemy = makeObjectTest<EnemyObject>(ObjectType.Enemy);
 
