@@ -192,6 +192,7 @@ const DropTarget: React.FC<DropTargetProps> = ({ stage, children }) => {
     const { scene, dispatch } = useScene();
     const [, setSelection] = useSelection();
     const [dragObject, setDragObject] = usePanelDrag();
+    const { zoom } = useZoom();
 
     const onDrop = (e: React.DragEvent) => {
         e.preventDefault();
@@ -203,13 +204,23 @@ const DropTarget: React.FC<DropTargetProps> = ({ stage, children }) => {
         setDragObject(null);
         stage.setPointersPositions(e);
 
-        const position = stage.getPointerPosition();
-        if (!position) {
+        const pointerPos = stage.getPointerPosition();
+        if (!pointerPos) {
             return;
         }
 
-        position.x -= dragObject.offset.x;
-        position.y -= dragObject.offset.y;
+        // Account for zoom scale - divide by zoom to get actual canvas coordinates
+        const rawX = pointerPos.x / zoom - dragObject.offset.x;
+        const rawY = pointerPos.y / zoom - dragObject.offset.y;
+
+        // Clamp position to canvas/arena bounds
+        const canvasWidth = scene.arena.width + scene.arena.padding * 2;
+        const canvasHeight = scene.arena.height + scene.arena.padding * 2;
+
+        const position = {
+            x: Math.max(0, Math.min(canvasWidth, rawX)),
+            y: Math.max(0, Math.min(canvasHeight, rawY)),
+        };
 
         const action = getDropAction(dragObject, getSceneCoord(scene, position));
         if (action) {

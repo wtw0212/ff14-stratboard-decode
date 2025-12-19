@@ -106,6 +106,20 @@ function updatePosition(
         };
     }
 
+    // Clamp center position to stay within arena bounds
+    const clampedPos = {
+        x: Math.max(0, Math.min(scene.arena.width, pos.x)),
+        y: Math.max(0, Math.min(scene.arena.height, pos.y)),
+    };
+
+    // If position was clamped, update the Konva node's visual position
+    if (clampedPos.x !== pos.x || clampedPos.y !== pos.y) {
+        const canvasPos = getCanvasCoord(scene, clampedPos);
+        e.target.position(canvasPos);
+    }
+
+    pos = clampedPos;
+
     const offset = vecSub(pos, targetObject);
 
     if (offset.x === 0 && offset.y === 0) {
