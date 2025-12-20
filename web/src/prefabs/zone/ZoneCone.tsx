@@ -128,7 +128,7 @@ const ConeRenderer: React.FC<ConeRendererProps> = ({ object, radius, rotation, c
     const style = getZoneStyle(object.color, object.opacity, radius * 2, object.hollow);
 
     return (
-        <Group rotation={rotation - 90 - coneAngle / 2}>
+        <Group rotation={rotation - 90}>
             {highlightProps && (
                 <OffsetWedge
                     radius={radius}
@@ -231,26 +231,16 @@ function getRotation(object: ConeZone, { pointerPos, activeHandleId }: HandleFun
 }
 
 function getConeAngle(object: ConeZone, { pointerPos, activeHandleId }: HandleFuncProps) {
-    if (pointerPos) {
+    if (pointerPos && activeHandleId === HandleId.Angle1) {
         const angle = getPointerAngle(pointerPos);
-
-        if (activeHandleId === HandleId.Angle1) {
-            const coneAngle = snapAngle(
-                mod360(angle - object.rotation + 90) - 90,
-                ROTATE_SNAP_DIVISION,
-                ROTATE_SNAP_TOLERANCE,
-            );
-            return clamp(coneAngle * 2, MIN_CONE_ANGLE, MAX_CONE_ANGLE);
-        }
-        if (activeHandleId === HandleId.Angle2) {
-            const coneAngle = snapAngle(
-                mod360(angle - object.rotation + 270) - 270,
-                ROTATE_SNAP_DIVISION,
-                ROTATE_SNAP_TOLERANCE,
-            );
-
-            return clamp(-coneAngle * 2, MIN_CONE_ANGLE, MAX_CONE_ANGLE);
-        }
+        // Clockwise expansion: cone starts at rotation and expands clockwise
+        // Calculate clockwise angle from rotation to pointer
+        const coneAngle = snapAngle(
+            mod360(angle - object.rotation),
+            ROTATE_SNAP_DIVISION,
+            ROTATE_SNAP_TOLERANCE,
+        );
+        return clamp(coneAngle, MIN_CONE_ANGLE, MAX_CONE_ANGLE);
     }
 
     return object.coneAngle;
@@ -262,13 +252,15 @@ const ConeControlPoints = createControlPointManager<ConeZone, ConeState>({
         const rotation = getRotation(object, handle);
         const coneAngle = getConeAngle(object, handle);
 
-        const x = radius * Math.sin(degtorad(coneAngle / 2));
-        const y = radius * Math.cos(degtorad(coneAngle / 2));
+        // Clockwise expansion: arc starts at rotation (top) and expands clockwise
+        // Radius handle at the start of the arc (top)
+        // Angle handle at the end of the arc (clockwise)
+        const endX = radius * Math.sin(degtorad(coneAngle));
+        const endY = -radius * Math.cos(degtorad(coneAngle));
 
         return [
             { id: HandleId.Radius, style: HandleStyle.Square, cursor: getResizeCursor(rotation), x: 0, y: -radius },
-            { id: HandleId.Angle1, style: HandleStyle.Diamond, cursor: 'crosshair', x: x, y: -y },
-            { id: HandleId.Angle2, style: HandleStyle.Diamond, cursor: 'crosshair', x: -x, y: -y },
+            { id: HandleId.Angle1, style: HandleStyle.Diamond, cursor: 'crosshair', x: endX, y: endY },
         ];
     },
     getRotation: getRotation,
@@ -282,7 +274,7 @@ const ConeControlPoints = createControlPointManager<ConeZone, ConeState>({
     onRenderBorder: (object, state) => {
         return (
             <OffsetWedge
-                rotation={-90 - state.coneAngle / 2}
+                rotation={-90}
                 radius={state.radius}
                 angle={state.coneAngle}
                 shapeOffset={1}

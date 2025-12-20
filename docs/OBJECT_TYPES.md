@@ -212,9 +212,9 @@ Strategy codes use a block-based binary format. Each block follows the pattern:
 | 02 | [TYPE] | Object Type | 4 bytes per type | Object type metadata |
 | 04 | 01 | Layer Info | 2 bytes | Layer/ordering data |
 | 05 | 03 | Coord Header | 2 bytes count | Marks start of coordinates |
-| 06 | 01 | Angle Block | int16 per object | Rotation angles |
-| 07 | 00 | Size Block | uint8 per object | Object sizes (50-200) |
-| 08 | 02 | Transparency | 4 bytes per object | RGBA values |
+| 06 | 01 | Angle Block | int16 per object | Rotation angles (0-360°) |
+| 07 | 00 | Size Block | uint8 per object | Object size (0-255), see formula below |
+| 08 | 02 | Transparency | 4 bytes per object | RGBA values (0-100 for alpha) |
 | 0A | 01 | Param A | 2 bytes per object | Type-specific param 1 |
 | 0B | 01 | Param B | 2 bytes per object | Type-specific param 2 |
 | 0C | 01 | Param C | 2 bytes per object | Type-specific param 3 |
@@ -248,12 +248,66 @@ Strategy codes use a block-based binary format. Each block follows the pattern:
 
 ### Type-Specific Parameter Mapping
 
-| Object Type | Param A (Block 0A) | Param B (Block 0B) |
-| :--- | :--- | :--- |
-| Fan AOE | Arc Angle (1-360°) | Unused (0) |
-| Donut AOE | Arc Angle (360° default) | Inner Radius |
-| Line AOE | Width (min 16) | Height |
-| Circle AOE | Unused | Unused |
+| Object Type | Size (Block 07) | Param A (Block 0A) | Param B (Block 0B) | Param C (Block 0C) |
+| :--- | :--- | :--- | :--- | :--- |
+| Circle AOE | Outer radius | Unused (0) | Unused (0) | Unused |
+| Fan AOE (Cone) | Outer radius | Arc angle (1-360°) | Unused (0) | Unused |
+| Donut AOE | Outer radius | Arc angle (default 360°) | Inner radius % (0-100) | Unused |
+| Line AOE | Unused | Width (pixels) | Height/Length (pixels) | Unused |
+| Line Stack | Unused | Width (pixels) | Height (pixels) | Unused |
+| General Marker | Unused | Width (pixels) | Height (pixels) | Unused |
+| Tower | Outer radius | Unused | Unused | Unused |
+| Stack | Outer radius | Unused | Unused | Unused |
+| Proximity | Outer radius | Unused | Unused | Unused |
+| Knockback | Outer radius | Unused | Unused | Unused |
+| Linear Knockback | Unused | Count | Unused | Unused |
+
+---
+
+## 8. Units and Formulas
+
+### Coordinate System
+| Property | Unit | Range | Notes |
+| :--- | :--- | :--- | :--- |
+| X, Y | 0.1 pixels | ±32767 | Stored as int16, divide by 10 for pixels |
+| Canvas Size | pixels | 512 × 384 | Fixed game board dimensions |
+| Origin | - | Top-left (0, 0) | +X right, +Y down |
+
+### Size / Radius Conversion
+
+The game stores size as a uint8 (0-255). To convert between game size and pixel radius:
+
+```
+radius_pixels = size × 2.47
+size = radius_pixels / 2.47
+```
+
+**Examples:**
+| Size (Game) | Radius (Pixels) |
+| :---: | :---: |
+| 50 | 123.5 px |
+| 100 | 247 px |
+| 200 | 494 px |
+
+### Rotation
+| Property | Unit | Range | Notes |
+| :--- | :--- | :--- | :--- |
+| Angle | degrees | 0-360 | 0° = North, clockwise |
+
+### Fan AOE (Cone) Hitbox
+
+The game stores the **center of the hitbox bounding box**, not the circle center:
+- For arc < 270°: Hitbox center is offset from circle center
+- For arc ≥ 270°: Hitbox center = Circle center
+- Arc expands **clockwise** from the rotation direction
+
+### Donut Inner Radius
+
+The inner radius is stored as a percentage of the outer radius:
+
+```
+inner_radius_pixels = (size × paramB) / 100
+```
 
 ### Text Object Special Structure
 

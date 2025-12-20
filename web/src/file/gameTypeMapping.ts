@@ -491,6 +491,64 @@ function convertObject(
     if (isConeZone(obj)) {
         gameObj.typeId = GAME_TYPES.fan_aoe;
         gameObj.paramA = Math.round(obj.coneAngle); // Arc angle
+
+        // Radius uses same formula as circle: scale = radius / 2.47
+        const scale = Math.round(obj.radius / 2.47);
+        gameObj.scale = scale;
+
+        // Game stores hitbox center, not circle center
+        // Both web and game now use clockwise expansion from rotation direction
+        const coneAngle = obj.coneAngle;
+        const radiusPx = obj.radius;
+        const webRotation = obj.rotation || 0;
+
+        // Web and game now use same rotation system (clockwise from start)
+        // No adjustment needed
+        gameObj.rotation = Math.round(((webRotation % 360) + 360) % 360);
+
+        // Calculate hitbox offset based on cone angle
+        // When arc < 360, the hitbox center moves away from circle center
+        // The offset is roughly: offset = radius * (1 - arcAngle/360) / 2 in the direction of the cone
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (coneAngle < 270) {
+            // Calculate hitbox center as center of bounding box of the arc
+            // Arc starts at webRotation and extends clockwise by coneAngle
+            const startRad = (webRotation * Math.PI) / 180;
+            const endRad = ((webRotation + coneAngle) * Math.PI) / 180;
+
+            // Start and end points of arc on unit circle
+            const startX = Math.sin(startRad);
+            const startY = -Math.cos(startRad);
+            const endX = Math.sin(endRad);
+            const endY = -Math.cos(endRad);
+
+            // Bounding box includes origin (0,0) and arc points
+            let minX = Math.min(0, startX, endX);
+            let maxX = Math.max(0, startX, endX);
+            let minY = Math.min(0, startY, endY);
+            let maxY = Math.max(0, startY, endY);
+
+            // Check if any cardinal direction is within the arc (extends to radius)
+            const isInArc = (angle: number) => {
+                const a = ((angle - webRotation) % 360 + 360) % 360;
+                return a > 0 && a < coneAngle;
+            };
+
+            if (isInArc(0)) minY = Math.min(minY, -1);   // North: y = -1
+            if (isInArc(90)) maxX = Math.max(maxX, 1);   // East: x = +1
+            if (isInArc(180)) maxY = Math.max(maxY, 1);  // South: y = +1
+            if (isInArc(270)) minX = Math.min(minX, -1); // West: x = -1
+
+            // Center of bounding box
+            offsetX = ((minX + maxX) / 2) * radiusPx;
+            offsetY = ((minY + maxY) / 2) * radiusPx;
+        }
+
+        gameObj.x = Math.round(obj.x + offsetX);
+        gameObj.y = Math.round(obj.y + offsetY);
+
         return gameObj;
     }
 
@@ -521,10 +579,12 @@ function convertObject(
         gameObj.paramB = Math.round(obj.height);
         switch (obj.type) {
             case ObjectType.Rect:
-            case ObjectType.LineStack:
                 // Game uses General Marker (0x0B) for Line AOE
                 gameObj.typeId = GAME_TYPES.marker;
-                // Rect uses center coords, game also uses center - no adjustment needed
+                return gameObj;
+            case ObjectType.LineStack:
+                // Line Stack has dedicated type 0x0F
+                gameObj.typeId = GAME_TYPES.line_stack;
                 return gameObj;
             case ObjectType.LineKnockback:
             case ObjectType.LineKnockAway:
@@ -952,7 +1012,7 @@ function convertGameToSceneObject(gameObj: GameObject, idMap: Record<number, str
             ...base,
             type: ObjectType.Cone,
             radius: getRadius(),
-            degree: gameObj.paramA
+            coneAngle: gameObj.paramA || 90
         } as any;
     }
     // 3. Donut
@@ -1071,8 +1131,29 @@ function convertGameToSceneObject(gameObj: GameObject, idMap: Record<number, str
 
     // 7. Marker (Waymarks)
     if (gameObj.typeId >= 0x4F && gameObj.typeId <= 0x56) { // Waymarks
-        const markerChar = typeName.replace('waymark ', '').toUpperCase();
-        return { ...base, type: ObjectType.Marker, name: markerChar } as any;
+        const waymarkNames: Record<number, { name: string; image: string; shape: 'circle' | 'square'; color: string }> = {
+            0x4F: { name: 'Waymark A', image: '/marker/waymark_a.png', shape: 'circle', color: '#ff0000' },
+            0x50: { name: 'Waymark B', image: '/marker/waymark_b.png', shape: 'circle', color: '#ffff00' },
+            0x51: { name: 'Waymark C', image: '/marker/waymark_c.png', shape: 'circle', color: '#0000ff' },
+            0x52: { name: 'Waymark D', image: '/marker/waymark_d.png', shape: 'circle', color: '#aa00aa' },
+            0x53: { name: 'Waymark 1', image: '/marker/waymark_1.png', shape: 'square', color: '#ff0000' },
+            0x54: { name: 'Waymark 2', image: '/marker/waymark_2.png', shape: 'square', color: '#ffff00' },
+            0x55: { name: 'Waymark 3', image: '/marker/waymark_3.png', shape: 'square', color: '#0000ff' },
+            0x56: { name: 'Waymark 4', image: '/marker/waymark_4.png', shape: 'square', color: '#aa00aa' },
+        };
+        const waymark = waymarkNames[gameObj.typeId];
+        if (waymark) {
+            return {
+                ...base,
+                type: ObjectType.Marker,
+                name: waymark.name,
+                image: waymark.image,
+                shape: waymark.shape,
+                color: waymark.color,
+                width: 42,
+                height: 42,
+            } as any;
+        }
     }
 
     // 7b. General Marker (0x0B) - uses paramA and paramB as width and height

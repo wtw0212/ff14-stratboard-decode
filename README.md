@@ -140,11 +140,11 @@ npm run dev
 - Debug mode for conversion inspection
 
 ### Known Limitations (Alpha)
-- [ ] Incomplete scale/size mapping for zones
-- [ ] Some zone types may export with incorrect parameters
-- [ ] Rotation values may differ from in-game behavior
+- [x] Size/radius mapping for zones (formula: `radius_px = size × 2.47`)
+- [x] Cone hitbox coordinate offset (bounding box center calculation)
+- [x] Cone arc expansion (now clockwise from rotation, matching game)
+- [ ] Narrow cone arcs (<90°) may have ~7px coordinate offset
 - [ ] Text objects not fully tested
-- [ ] Enemy hitbox sizes need calibration
 
 ---
 
