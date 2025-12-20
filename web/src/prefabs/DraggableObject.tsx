@@ -1,6 +1,6 @@
 import { KonvaEventObject } from 'konva/lib/Node';
 import React, { Dispatch, ReactNode } from 'react';
-import { getCanvasCoord, getSceneCoord } from '../coord';
+import { getCanvasCoord, getSceneCoord, snapPointToGrid } from '../coord';
 import { CursorGroup } from '../CursorGroup';
 import { EditMode } from '../editMode';
 import { moveObjectsBy } from '../groupOperations';
@@ -100,10 +100,8 @@ function updatePosition(
     // Apply snap-to-grid if enabled
     if (scene.arena.snapToGrid) {
         const gridSize = scene.arena.snapGridSize ?? 32;
-        pos = {
-            x: Math.round(pos.x / gridSize) * gridSize,
-            y: Math.round(pos.y / gridSize) * gridSize,
-        };
+        const snapped = snapPointToGrid(pos.x, pos.y, gridSize);
+        pos = { x: snapped.x, y: snapped.y };
     }
 
     // Clamp center position to stay within arena bounds

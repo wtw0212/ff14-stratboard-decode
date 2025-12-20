@@ -32,6 +32,7 @@ import {
     ArenaShape,
     GridType,
 } from '../scene';
+import { mod360 } from '../util';
 import { encodeStrategy, decodeStrategy } from './gameStrategyCodec';
 
 // ============================================================================
@@ -411,7 +412,7 @@ function convertObject(
         typeId: 0,
         x: Math.round(x),
         y: Math.round(y),
-        rotation: Math.round(rotation),
+        rotation: Math.round(mod360(rotation + 180) - 180),
         scale: 100, // Default size
         color,
         transparency: 100 - (obj.opacity ?? 100), // Map opacity (100=visible) to transparency (0=visible)
@@ -506,47 +507,44 @@ function convertObject(
         const webRotation = obj.rotation || 0;
 
         // Web and game now use same rotation system (clockwise from start)
-        // No adjustment needed
-        gameObj.rotation = Math.round(((webRotation % 360) + 360) % 360);
+        // Normalize to [-180, 180] for game compatibility
+        gameObj.rotation = Math.round(mod360(webRotation + 180) - 180);
 
-        // Calculate hitbox offset based on cone angle
-        // When arc < 360, the hitbox center moves away from circle center
-        // The offset is roughly: offset = radius * (1 - arcAngle/360) / 2 in the direction of the cone
+        // Calculate hitbox offset using rotation-based approach
+        // 1. Calculate offset for rotation=0 (cone pointing up)
+        // 2. Rotate the offset by the actual rotation angle
         let offsetX = 0;
         let offsetY = 0;
 
         if (coneAngle < 270) {
-            // Calculate hitbox center as center of bounding box of the arc
-            // Arc starts at webRotation and extends clockwise by coneAngle
-            const startRad = (webRotation * Math.PI) / 180;
-            const endRad = ((webRotation + coneAngle) * Math.PI) / 180;
+            // Calculate bounding box for rotation=0 cone
+            const startRad0 = 0;
+            const endRad0 = (coneAngle * Math.PI) / 180;
 
-            // Start and end points of arc on unit circle
-            const startX = Math.sin(startRad);
-            const startY = -Math.cos(startRad);
-            const endX = Math.sin(endRad);
-            const endY = -Math.cos(endRad);
+            const startX0 = Math.sin(startRad0);  // 0
+            const startY0 = -Math.cos(startRad0); // -1
+            const endX0 = Math.sin(endRad0);
+            const endY0 = -Math.cos(endRad0);
 
-            // Bounding box includes origin (0,0) and arc points
-            let minX = Math.min(0, startX, endX);
-            let maxX = Math.max(0, startX, endX);
-            let minY = Math.min(0, startY, endY);
-            let maxY = Math.max(0, startY, endY);
+            let minX0 = Math.min(0, startX0, endX0);
+            let maxX0 = Math.max(0, startX0, endX0);
+            let minY0 = Math.min(0, startY0, endY0);
+            let maxY0 = Math.max(0, startY0, endY0);
 
-            // Check if any cardinal direction is within the arc (extends to radius)
-            const isInArc = (angle: number) => {
-                const a = ((angle - webRotation) % 360 + 360) % 360;
-                return a > 0 && a < coneAngle;
-            };
+            // For rotation=0: 0° is always in arc, check other cardinals
+            minY0 = -1; // North always included
+            if (coneAngle > 90) maxX0 = 1;   // East
+            if (coneAngle > 180) maxY0 = 1;  // South
 
-            if (isInArc(0)) minY = Math.min(minY, -1);   // North: y = -1
-            if (isInArc(90)) maxX = Math.max(maxX, 1);   // East: x = +1
-            if (isInArc(180)) maxY = Math.max(maxY, 1);  // South: y = +1
-            if (isInArc(270)) minX = Math.min(minX, -1); // West: x = -1
+            // Base offset for rotation=0, scaled by ~1.04 empirical factor
+            const scale = 1.04;
+            const baseOffsetX = ((minX0 + maxX0) / 2) * radiusPx * scale;
+            const baseOffsetY = ((minY0 + maxY0) / 2) * radiusPx * scale;
 
-            // Center of bounding box
-            offsetX = ((minX + maxX) / 2) * radiusPx;
-            offsetY = ((minY + maxY) / 2) * radiusPx;
+            // Rotate offset by webRotation (clockwise)
+            const rotRad = (webRotation * Math.PI) / 180;
+            offsetX = baseOffsetX * Math.cos(rotRad) - baseOffsetY * Math.sin(rotRad);
+            offsetY = baseOffsetX * Math.sin(rotRad) + baseOffsetY * Math.cos(rotRad);
         }
 
         gameObj.x = Math.round(obj.x + offsetX);
@@ -728,7 +726,8 @@ export function generateStrategyBinary(title: string, objects: GameObject[]): Ui
     content.push(0x06, 0x00, 0x01, 0x00); // Block header
     content.push(num & 0xff, (num >> 8) & 0xff); // Count
     for (const obj of objects) {
-        const angle = obj.rotation & 0xffff;
+        // Encode as signed int16 (two's complement for negatives)
+        const angle = obj.rotation < 0 ? obj.rotation + 65536 : obj.rotation;
         content.push(angle & 0xff, (angle >> 8) & 0xff);
     }
 
@@ -1004,7 +1003,7 @@ function convertGameToSceneObject(gameObj: GameObject, idMap: Record<number, str
         type: ObjectType.Undefined,
         x: gameObj.x,
         y: gameObj.y,
-        rotation: gameObj.rotation,
+        rotation: mod360(gameObj.rotation + 180) - 180,
         opacity: Math.max(0, 100 - gameObj.transparency),
         color: `#${gameObj.color.map(c => c.toString(16).padStart(2, '0')).join('')}`
     };

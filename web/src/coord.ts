@@ -14,7 +14,8 @@ export const ALIGN_TO_PIXEL = {
  * Snap a coordinate to the nearest grid intersection
  */
 export function snapToGrid(value: number, gridSize: number): number {
-    return Math.round(value / gridSize) * gridSize;
+    const snapSize = gridSize / 2;
+    return Math.round(value / snapSize) * snapSize;
 }
 
 /**
