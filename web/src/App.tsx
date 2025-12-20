@@ -1,4 +1,4 @@
-import { makeStyles, Spinner, Toaster, tokens } from '@fluentui/react-components';
+import { Button, makeStyles, MessageBar, MessageBarActions, MessageBarBody, Spinner, Toaster, tokens } from '@fluentui/react-components';
 import React, { PropsWithChildren, Suspense } from 'react';
 import { HotkeysProvider } from 'react-hotkeys-hook';
 import { createBrowserRouter, createRoutesFromElements, Outlet, Route, RouterProvider } from 'react-router-dom';
@@ -22,8 +22,9 @@ const useStyles = makeStyles({
         bottom: 0,
         display: 'grid',
         gridTemplateColumns: `auto minmax(400px, auto) 1fr`,
-        gridTemplateRows: `min-content min-content 1fr`,
+        gridTemplateRows: `min-content min-content min-content 1fr`,
         gridTemplateAreas: `
+                "warning    warning warning"
                 "header     header  header"
                 "left-panel steps   right-panel"
                 "left-panel content right-panel"
@@ -88,11 +89,24 @@ const Layout: React.FC = () => {
 const Root: React.FC = () => {
     const classes = useStyles();
     const { onDragOver, onDrop, renderModal } = useFileLoaderDropTarget();
+    const [showWarning, setShowWarning] = React.useState(true);
 
     return (
         <>
             <div className={classes.root} onDragOver={onDragOver} onDrop={onDrop}>
                 <Toaster position="top" />
+                {showWarning && (
+                    <MessageBar intent="warning" style={{ gridArea: 'warning' }}>
+                        <MessageBarBody>
+                            ALPHA TESTING: This tool is under development. Elements may differ from the in-game appearance and errors may occur.
+                        </MessageBarBody>
+                        <MessageBarActions>
+                            <Button appearance="transparent" size="small" onClick={() => setShowWarning(false)}>
+                                Dismiss
+                            </Button>
+                        </MessageBarActions>
+                    </MessageBar>
+                )}
                 <SiteHeader className={classes.header} />
                 <Outlet />
             </div>
