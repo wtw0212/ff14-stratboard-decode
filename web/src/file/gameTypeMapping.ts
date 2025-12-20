@@ -422,8 +422,11 @@ function convertObject(
 
     // Convert based on type
     if (isParty(obj)) {
-        const jobName = (obj as PartyObject).name.toLowerCase();
+        const pObj = obj as PartyObject;
+        const jobName = pObj.name.toLowerCase();
         gameObj.typeId = JOB_NAME_TO_ID[jobName] ?? GAME_TYPES.dps;
+        // Scale 100 = 25px. So scale = width * 4
+        gameObj.scale = Math.round((pObj.width || 25) * 4);
         return gameObj;
     }
 
@@ -651,7 +654,8 @@ function convertObject(
  * Convert hex color to RGB tuple
  */
 function hexToRgb(hex: string): [number, number, number] {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    // Handle #RRGGBB and #RRGGBBAA (ignore alpha)
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})(?:[a-f\d]{2})?$/i.exec(hex);
     if (result && result[1] && result[2] && result[3]) {
         return [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)];
     }
@@ -686,7 +690,9 @@ export function generateStrategyBinary(title: string, objects: GameObject[]): Ui
 
         // For Text objects, emit text content block immediately after type block
         if (obj.typeId === GAME_TYPES.text && obj.textContent) {
-            const textBytes = new TextEncoder().encode(obj.textContent + '\0'); // String + null terminator
+            // Safeguard: Truncate to 30 chars to prevent game crash (buffer overflow)
+            const safeText = obj.textContent.slice(0, 30);
+            const textBytes = new TextEncoder().encode(safeText + '\0'); // String + null terminator
             // Pad to 4-byte alignment (required by game format)
             const paddedLen = Math.ceil(textBytes.length / 4) * 4;
             content.push(0x03, 0x00); // Block ID
@@ -973,7 +979,13 @@ function parseStrategyBinary(binary: Uint8Array): GameObject[] {
                 }
                 blockSize += num * 2;
                 break;
+            case 0x09: // Unknown block - 2 bytes per obj (observed in some codes)
+                blockSize += num * 2;
+                break;
             default:
+                // Unknown block - skip 1 byte and try to continue
+                // This prevents infinite loops while still attempting to parse
+                blockSize = 1;
                 break;
         }
 
@@ -1116,15 +1128,16 @@ function convertGameToSceneObject(gameObj: GameObject, idMap: Record<number, str
 
     const jobInfo = gameTypeToJob[gameObj.typeId];
     if (jobInfo) {
-        // Calculate size from scale (default icon size is 32, scale 100 = default)
-        const size = Math.round(32 * (gameObj.scale / 100));
+        // Calculate size from scale (default icon size is 25, scale 100 = default)
+        // size = 25 * (scale / 100) = scale / 4
+        const size = Math.round(gameObj.scale / 4);
         return {
             ...base,
             type: ObjectType.Party,
             name: jobInfo.name,
             image: jobInfo.icon,
-            width: size || 32,
-            height: size || 32,
+            width: size || 25,
+            height: size || 25,
             status: [],
         } as any;
     }

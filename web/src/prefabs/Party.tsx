@@ -16,7 +16,7 @@ import { useHighlightProps } from './highlight';
 import { PrefabIcon } from './PrefabIcon';
 import { ResizeableObjectContainer } from './ResizeableObjectContainer';
 
-const DEFAULT_SIZE = 32;
+const DEFAULT_SIZE = 25;
 
 function makeIcon(job: Job) {
     const { icon, name } = getJob(job);

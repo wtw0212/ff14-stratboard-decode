@@ -145,14 +145,21 @@ export const TextValueControl: React.FC<PropertiesControlProps<TextObject>> = ({
     const text = commonValue(objects, (obj) => obj.text);
 
     const setText = (text: string) =>
-        dispatch({ type: 'update', value: objects.map((obj) => ({ ...obj, text })), transient: true });
+        dispatch({
+            type: 'update',
+            value: objects.map((obj) => ({ ...obj, text: text.slice(0, 30) })),
+            transient: true,
+        });
+
+    const charCount = (text ?? '').length;
 
     // TODO: add autoAdjustHeight once implemented
     return (
-        <Field label="Text">
+        <Field label={`Text (${charCount}/30)`} validationMessage={charCount >= 30 ? 'Max 30 characters' : undefined}>
             <DeferredTextarea
                 resize="vertical"
                 rows={3}
+                maxLength={30}
                 value={text ?? ''}
                 onChange={(ev, data) => setText(data.value)}
                 onCommit={() => dispatch({ type: 'commit' })}

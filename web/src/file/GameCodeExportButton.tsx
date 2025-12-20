@@ -29,6 +29,7 @@ import { CollapsableToolbarButton } from '../CollapsableToolbarButton';
 import { HotkeyBlockingDialogBody } from '../HotkeyBlockingDialogBody';
 import { useScene } from '../SceneProvider';
 import { sceneToGameCode, getExportableStats, getDebugExportData } from './gameTypeMapping';
+import { verifyStrategy } from './gameStrategyCodec';
 
 export interface GameCodeExportButtonProps {
     children?: React.ReactNode;
@@ -100,15 +101,17 @@ const GameCodeExportDialogBody: React.FC = () => {
     }, [canonicalScene, currentStep]);
 
     // Generate game code
-    const { gameCode, error } = useMemo(() => {
+    const { gameCode, error, isValid } = useMemo(() => {
         try {
             if (stats.exportable === 0) {
-                return { gameCode: '', error: 'No exportable objects found' };
+                return { gameCode: '', error: 'No exportable objects found', isValid: false };
             }
             const code = sceneToGameCode(canonicalScene, currentStep, exportTitle);
-            return { gameCode: code, error: null };
+            // Validate by decoding the generated code
+            const valid = verifyStrategy(code);
+            return { gameCode: code, error: null, isValid: valid };
         } catch (e) {
-            return { gameCode: '', error: e instanceof Error ? e.message : 'Unknown error' };
+            return { gameCode: '', error: e instanceof Error ? e.message : 'Unknown error', isValid: false };
         }
     }, [canonicalScene, currentStep, exportTitle, stats]);
 
@@ -172,8 +175,17 @@ const GameCodeExportDialogBody: React.FC = () => {
                     />
                 </Field>
 
+                {gameCode && !error && (
+                    <p style={{ fontSize: '12px', marginTop: '4px', color: isValid ? '#4caf50' : '#ff5722' }}>
+                        {isValid ? '✓ Code validation passed' : '✗ Code validation failed - may not import correctly'}
+                    </p>
+                )}
+
                 <p style={{ fontSize: '12px', color: '#888', marginTop: '8px' }}>
                     Paste this code in the FF14 game chat to share the strategy.
+                </p>
+                <p style={{ fontSize: '12px', color: '#f5a623', marginTop: '4px' }}>
+                    ⚠️ Elements may appear differently in-game. Please double-check after importing.
                 </p>
 
                 <Checkbox
