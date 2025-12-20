@@ -8,7 +8,6 @@ import {
     isArrow,
     isConeZone,
     isDrawObject,
-    isEnemy,
     isExaflareZone,
     isEye,
     isIcon,
@@ -36,7 +35,7 @@ import { ArrowPointersControl } from './properties/ArrowControls';
 import { DrawObjectBrushControl } from './properties/BrushControl';
 import { ColorControl, ColorSwatchControl } from './properties/ColorControl';
 import { ConeAngleControl } from './properties/ConeControls';
-import { EnemyRingControl } from './properties/EnemyControls';
+
 import { ExaflareLengthControl, ExaflareSpacingControl } from './properties/ExaflareControls';
 import { EyeInvertControl } from './properties/EyeControls';
 import { HideControl } from './properties/HideControl';
@@ -147,7 +146,7 @@ const Controls: React.FC = () => {
 
             <div className={mergeClasses(classes.row, classes.rightGap)}>
                 <ControlCondition objects={objects} test={isRotateable} control={RotationControl} />
-                <ControlCondition objects={objects} test={isEnemy} control={EnemyRingControl} />
+
                 <ControlCondition objects={objects} test={isExaflareZone} control={ExaflareSpacingControl} />
                 <ControlCondition objects={objects} test={isStarburstZone} control={StarburstSpokeCountControl} />
 

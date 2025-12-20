@@ -59,7 +59,7 @@ export const Resizer: React.FC<ResizerProps> = ({
 
         const newProps = {
             x: Math.round(object.x + node.x()),
-            y: Math.round(object.y - node.y()),
+            y: Math.round(object.y + node.y()),
             rotation: Math.round(node.rotation()),
             width: Math.round(Math.max(minWidthRequired, object.width * node.scaleX())),
             height: Math.round(Math.max(minHeightRequired, object.height * node.scaleY())),

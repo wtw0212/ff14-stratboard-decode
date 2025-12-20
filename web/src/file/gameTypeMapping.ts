@@ -497,32 +497,40 @@ function convertObject(
     if (isDonutZone(obj)) {
         gameObj.typeId = GAME_TYPES.donut_aoe;
         gameObj.paramA = 360; // Full circle
-        gameObj.paramB = Math.round(obj.innerRadius * 10); // Inner radius
+        // Outer radius uses same formula as circle: scale = radius / 2.47
+        const scale = Math.round(obj.radius / 2.47);
+        gameObj.scale = scale;
+        // Inner radius formula: inner_pixel = (scale * paramB) / 100
+        // So: paramB = (innerRadius * 100) / scale
+        gameObj.paramB = Math.round((obj.innerRadius * 100) / scale);
         return gameObj;
     }
 
     if (isLineZone(obj)) {
-        gameObj.typeId = GAME_TYPES.line_aoe;
+        // Game uses General Marker (0x0B) for Line AOE, not 0x01
+        gameObj.typeId = GAME_TYPES.marker;
         gameObj.paramA = Math.round(obj.width);
         gameObj.paramB = Math.round(obj.length);
+        // Line zone now stores center coords, game also uses center - no adjustment needed
         return gameObj;
     }
 
     if (isRectangleZone(obj)) {
-        // Rectangle zones use paramA for width and paramB for length
+        // Rectangle zones use paramA for width and paramB for height
         gameObj.paramA = Math.round(obj.width);
         gameObj.paramB = Math.round(obj.height);
         switch (obj.type) {
             case ObjectType.Rect:
             case ObjectType.LineStack:
-                gameObj.typeId = GAME_TYPES.line_aoe;
-                break;
+                // Game uses General Marker (0x0B) for Line AOE
+                gameObj.typeId = GAME_TYPES.marker;
+                // Rect uses center coords, game also uses center - no adjustment needed
+                return gameObj;
             case ObjectType.LineKnockback:
             case ObjectType.LineKnockAway:
                 gameObj.typeId = GAME_TYPES.linear_knockback;
-                break;
+                return gameObj;
         }
-        return gameObj;
     }
 
     if (isTowerZone(obj)) {
@@ -948,23 +956,26 @@ function convertGameToSceneObject(gameObj: GameObject, idMap: Record<number, str
         } as any;
     }
     // 3. Donut
+    // Per user observation: inner_pixel = (scale * paramB) / 100
     if (gameObj.typeId === GAME_TYPES.donut_aoe) {
+        const outerRadius = getRadius();
+        const innerRadius = Math.round((gameObj.scale * gameObj.paramB) / 100);
         return {
             ...base,
             type: ObjectType.Donut,
-            radius: getRadius(),
-            innerRadius: Math.round(gameObj.paramB / 2.47)
+            radius: outerRadius,
+            innerRadius: innerRadius
         } as any;
     }
-    // 4. Line/Rect
+    // 4. Line AOE
+    // Per docs: ParamA = Width, ParamB = Height (as 'length' for Line type)
+    // Game uses pixels directly
     if (gameObj.typeId === GAME_TYPES.line_aoe) {
-        // Line AOE params: Width (A), Height (B)
-        // XIVPlan Rect: width, height
         return {
             ...base,
-            type: ObjectType.Rect,
-            width: Math.round(gameObj.paramA / 2.47),
-            height: Math.round(gameObj.paramB / 2.47)
+            type: ObjectType.Line,
+            width: gameObj.paramA || 10,
+            length: gameObj.paramB || 10
         } as any;
     }
     // 5. Mechanics
@@ -1062,6 +1073,22 @@ function convertGameToSceneObject(gameObj: GameObject, idMap: Record<number, str
     if (gameObj.typeId >= 0x4F && gameObj.typeId <= 0x56) { // Waymarks
         const markerChar = typeName.replace('waymark ', '').toUpperCase();
         return { ...base, type: ObjectType.Marker, name: markerChar } as any;
+    }
+
+    // 7b. General Marker (0x0B) - uses paramA and paramB as width and height
+    if (gameObj.typeId === GAME_TYPES.marker) {
+        // If it has width/height params, treat as a Rect (Line AOE)
+        if (gameObj.paramA > 0 || gameObj.paramB > 0) {
+            return {
+                ...base,
+                type: ObjectType.Rect,
+                width: gameObj.paramA || 10,
+                height: gameObj.paramB || 10,
+                // Rect uses center coords, game also uses center - no adjustment needed
+            } as any;
+        }
+        // Fallback to a basic marker if no params
+        return { ...base, type: ObjectType.Marker, name: '' } as any;
     }
 
     // 8. Text

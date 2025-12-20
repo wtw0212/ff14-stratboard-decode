@@ -1,7 +1,7 @@
 import React from 'react';
 import { Group, Rect } from 'react-konva';
 import { getDragOffset, registerDropHandler } from '../../DropHandler';
-import Icon from '../../assets/zone/square.svg?react';
+import Icon from '../../assets/zone/line.svg?react';
 import { DetailsItem } from '../../panel/DetailsItem';
 import { ListComponentProps, registerListComponent } from '../../panel/ListComponentRegistry';
 import { registerRenderer, RendererProps } from '../../render/ObjectRegistry';
@@ -15,7 +15,7 @@ import { ResizeableObjectContainer } from '../ResizeableObjectContainer';
 import { useHighlightProps } from '../highlight';
 import { getZoneStyle } from './style';
 
-const NAME = 'Rectangle';
+const NAME = 'Line';
 
 const DEFAULT_SIZE = 150;
 
