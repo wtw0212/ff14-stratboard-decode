@@ -33,6 +33,7 @@ import { downloadScene, getBlobSource } from './file/blob';
 import { DialogOpenContext } from './useCloseDialog';
 import { useHotkeys } from './useHotkeys';
 import { useIsDirty, useSetSavedState } from './useIsDirty';
+import { ChangelogDialogButton } from './ChangelogDialog';
 
 const useStyles = makeStyles({
     toolbar: {
@@ -98,6 +99,10 @@ export const MainToolbar: React.FC = () => {
                     <ToolbarDivider />
 
                     <GridToggleButtons />
+
+                    <ToolbarDivider />
+
+                    <ChangelogDialogButton>Changelog</ChangelogDialogButton>
                 </Toolbar>
             </InPortal>
         </>
