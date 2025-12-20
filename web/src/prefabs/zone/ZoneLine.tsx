@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Circle, Group, Rect } from 'react-konva';
+import { Label } from '@fluentui/react-components';
 import Icon from '../../assets/zone/line.svg?react';
 import { getPointerAngle, snapAngle } from '../../coord';
 import { getResizeCursor } from '../../cursor';
@@ -9,10 +10,10 @@ import { ListComponentProps, registerListComponent } from '../../panel/ListCompo
 import { LayerName } from '../../render/layers';
 import { registerRenderer, RendererProps } from '../../render/ObjectRegistry';
 import { ActivePortal } from '../../render/Portals';
-import { LineZone, ObjectType } from '../../scene';
+import { LineZone, ObjectType, RectangleZone } from '../../scene';
 import { useScene } from '../../SceneProvider';
 import { useIsDragging } from '../../selection';
-import { CENTER_DOT_RADIUS, DEFAULT_AOE_COLOR, DEFAULT_AOE_OPACITY, panelVars } from '../../theme';
+import { CENTER_DOT_RADIUS, DEFAULT_AOE_COLOR, DEFAULT_AOE_OPACITY, panelVars, makeColorSwatch } from '../../theme';
 import { usePanelDrag } from '../../usePanelDrag';
 import { distance, getDistanceFromLine, VEC_ZERO, vecAtAngle } from '../../vector';
 import { MIN_LINE_LENGTH, MIN_LINE_WIDTH } from '../bounds';
@@ -22,6 +23,19 @@ import { HideGroup } from '../HideGroup';
 import { useHighlightProps, useShowResizer } from '../highlight';
 import { PrefabIcon } from '../PrefabIcon';
 import { getZoneStyle } from './style';
+import { CompactSwatchColorPicker } from '../../CompactSwatchColorPicker';
+
+// Game color palette for color picker
+const GAME_COLOR_PALETTE = [
+    '#FFFFFF', '#FFBDBF', '#FFE0C8', '#FFF8B0', '#E9FFE2', '#E8FFFE', '#9CD0F4', '#FFDCFF',
+    '#F8F8F8', '#FF0000', '#FF8000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF',
+    '#E0E0E0', '#FF4C4C', '#FFA666', '#FFFFB2', '#80FF00', '#BCFFF0', '#0080FF', '#E26090',
+    '#D8D8D8', '#FF7F7F', '#FFCEAC', '#FFDE73', '#80F860', '#66E6FF', '#94C0FF', '#FF8CC6',
+];
+
+const COLOR_SWATCHES = GAME_COLOR_PALETTE.map((color, index) =>
+    makeColorSwatch(color, `lineaoe-${index}`)
+);
 
 const NAME = 'Line';
 
@@ -41,7 +55,7 @@ export const ZoneLine: React.FC = () => {
                 const offset = getDragOffset(e);
                 setDragObject({
                     object: {
-                        type: ObjectType.Line,
+                        type: ObjectType.Rect,  // Line AOE uses Rect internally
                     },
                     offset: {
                         x: offset.x,
@@ -53,23 +67,23 @@ export const ZoneLine: React.FC = () => {
     );
 };
 
-registerDropHandler<LineZone>(ObjectType.Line, (object, position) => {
+registerDropHandler<RectangleZone>(ObjectType.Rect, (object, position) => {
     return {
         type: 'add',
         object: {
-            type: ObjectType.Cone,
             color: DEFAULT_AOE_COLOR,
             opacity: DEFAULT_AOE_OPACITY,
             width: DEFAULT_WIDTH,
-            length: DEFAULT_LENGTH,
+            height: DEFAULT_LENGTH,  // Rect uses 'height' not 'length'
             rotation: 0,
+            hollow: false,
             ...object,
             ...position,
         },
     };
 });
 
-const LineDetails: React.FC<ListComponentProps<LineZone>> = ({ object, ...props }) => {
+const LineDetails: React.FC<ListComponentProps<RectangleZone>> = ({ object, ...props }) => {
     return (
         <DetailsItem
             icon={<Icon width="100%" height="100%" style={{ [panelVars.colorZoneOrange]: object.color }} />}
@@ -80,7 +94,7 @@ const LineDetails: React.FC<ListComponentProps<LineZone>> = ({ object, ...props 
     );
 };
 
-registerListComponent<LineZone>(ObjectType.Line, LineDetails);
+registerListComponent<RectangleZone>(ObjectType.Rect, LineDetails);
 
 enum HandleId {
     Length,
@@ -248,4 +262,4 @@ const LineContainer: React.FC<RendererProps<LineZone>> = ({ object }) => {
     );
 };
 
-registerRenderer<LineZone>(ObjectType.Line, LayerName.Ground, LineContainer);
+registerRenderer<RectangleZone>(ObjectType.Rect, LayerName.Ground, LineContainer);

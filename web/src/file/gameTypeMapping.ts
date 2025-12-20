@@ -15,8 +15,7 @@ import {
     isConeZone,
     isCircleZone,
     isDonutZone,
-    isLineZone,
-    isRectangleZone,
+    isRectangleZone,  // Rect now used for Line AOE
     isStackZone,
     isTowerZone,
     isMarker,
@@ -29,6 +28,7 @@ import {
     isStarburstZone,
     isIcon,
     isExaflareZone,
+    isGameLine,
     PartyObject,
     EnemyObject,
     ArenaShape,
@@ -567,14 +567,7 @@ function convertObject(
         return gameObj;
     }
 
-    if (isLineZone(obj)) {
-        // Game uses General Marker (0x0B) for Line AOE, not 0x01
-        gameObj.typeId = GAME_TYPES.marker;
-        gameObj.paramA = Math.round(obj.width);
-        gameObj.paramB = Math.round(obj.length);
-        // Line zone now stores center coords, game also uses center - no adjustment needed
-        return gameObj;
-    }
+    // Line AOE now uses ObjectType.Rect - handled by isRectangleZone below
 
     if (isRectangleZone(obj)) {
         // Rectangle zones use paramA for width and paramB for height
@@ -627,6 +620,37 @@ function convertObject(
         if (isRadiusObject(obj)) {
             gameObj.scale = Math.round(obj.radius / 2.47);
         }
+        return gameObj;
+    }
+
+    // GameLine (0x0C) - game's line/tether type
+    // Game stores: center position, end point (PARAM_A/B × 10), height/thickness (PARAM_C)
+    if (isGameLine(obj)) {
+        gameObj.typeId = GAME_TYPES.line;
+
+        // Line extends from position (x, y) in direction of rotation by length
+        // Web: rotation 0 = horizontal (right), so add 90° to convert to math angle
+        const rotRad = ((obj.rotation + 90) * Math.PI) / 180;
+        const halfLength = obj.length / 2;
+
+        // Line origin is at one end, calculate center
+        const centerX = obj.x + Math.sin(rotRad) * halfLength;
+        const centerY = obj.y - Math.cos(rotRad) * halfLength;
+
+        // End point is at full length from origin
+        const endX = obj.x + Math.sin(rotRad) * obj.length;
+        const endY = obj.y - Math.cos(rotRad) * obj.length;
+
+        gameObj.x = Math.round(centerX);
+        gameObj.y = Math.round(centerY);
+
+        // PARAM_A = end X × 10, PARAM_B = end Y × 10
+        gameObj.paramA = Math.round(endX * 10);
+        gameObj.paramB = Math.round(endY * 10);
+
+        // PARAM_C = height/thickness (game range 2-10, default 6)
+        gameObj.paramC = Math.min(10, Math.max(2, Math.round(obj.width)));
+
         return gameObj;
     }
 
@@ -1063,14 +1087,15 @@ function convertGameToSceneObject(gameObj: GameObject, idMap: Record<number, str
         } as any;
     }
     // 4. Line AOE
-    // Per docs: ParamA = Width, ParamB = Height (as 'length' for Line type)
-    // Game uses pixels directly
+    // Per docs: ParamA = Width, ParamB = Height
+    // Now uses ObjectType.Rect (displayed as "Line" in UI)
     if (gameObj.typeId === GAME_TYPES.line_aoe) {
         return {
             ...base,
-            type: ObjectType.Line,
+            type: ObjectType.Rect,  // Line AOE uses Rect type internally
             width: gameObj.paramA || 10,
-            length: gameObj.paramB || 10
+            height: gameObj.paramB || 10,  // Rect uses 'height' not 'length'
+            hollow: false
         } as any;
     }
     // 5. Mechanics
@@ -1261,8 +1286,7 @@ export function getExportableStats(
             isStackZone(obj) ||
             isConeZone(obj) ||
             isDonutZone(obj) ||
-            isLineZone(obj) ||
-            isRectangleZone(obj) ||
+            isRectangleZone(obj) ||  // Includes Line AOE (Rect type)
             isTowerZone(obj) ||
             isEye(obj) ||
             isStarburstZone(obj) ||

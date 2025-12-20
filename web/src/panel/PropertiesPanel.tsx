@@ -2,6 +2,7 @@ import { mergeClasses } from '@fluentui/react-components';
 import React from 'react';
 import { useCurrentStep } from '../SceneProvider';
 import {
+    ObjectType,
     SceneObject,
     UnknownObject,
     isArcZone,
@@ -10,10 +11,10 @@ import {
     isDrawObject,
     isExaflareZone,
     isEye,
+    isGameLine,
     isIcon,
     isImageObject,
     isInnerRadiusObject,
-    isLineZone,
     isMarker,
     isMoveable,
     isNamed,
@@ -38,11 +39,11 @@ import { ConeAngleControl } from './properties/ConeControls';
 
 import { ExaflareLengthControl, ExaflareSpacingControl } from './properties/ExaflareControls';
 import { EyeInvertControl } from './properties/EyeControls';
+import { GameLineLengthControl, GameLineWidthControl } from './properties/GameLineControls';
 import { HideControl } from './properties/HideControl';
 import { HollowControl } from './properties/HollowControl';
 import { IconStacksControl, IconTimeControl } from './properties/IconControls';
 import { ImageControl } from './properties/ImageControl';
-import { LineSizeControl } from './properties/LineControls';
 import { MarkerShapeControl } from './properties/MarkerControls';
 import { NameControl } from './properties/NameControl';
 import { OpacityControl } from './properties/OpacityControl';
@@ -57,7 +58,11 @@ import { StarburstSpokeCountControl, StarburstSpokeWidthControl } from './proper
 import { TetherTypeControl, TetherWidthControl } from './properties/TetherControls';
 import { TextLayoutControl, TextValueControl } from './properties/TextControls';
 
-export interface PropertiesPanelProps {
+// Color picker for Text, Line AOE (Rect or Line type), and GameLine
+export const supportsColor = (x: UnknownObject) =>
+    isText(x) || x.type === ObjectType.Rect || x.type === ObjectType.Line || isGameLine(x);
+
+interface PropertiesPanelProps {
     className?: string;
 }
 
@@ -115,14 +120,14 @@ const Controls: React.FC = () => {
             {/* Style */}
             <ControlCondition objects={objects} test={isTether} control={TetherTypeControl} />
             <div className={mergeClasses(classes.row, classes.alignTop)}>
-                {/* Color only for Text and Line AOE - per game constraints */}
-                <ControlCondition objects={objects} test={(x) => isText(x) || isLineZone(x)} control={ColorControl} className={classes.grow} />
+                {/* Color only for Text, Line AOE (Rect), GameLine */}
+                <ControlCondition objects={objects} test={(x) => isText(x) || x.type === ObjectType.Rect || x.type === ObjectType.Line || isGameLine(x)} control={ColorControl} className={classes.grow} />
                 <ControlCondition objects={objects} test={isArrow} control={ArrowPointersControl} />
                 <ControlCondition objects={objects} test={supportsHollow} control={HollowControl} />
                 <ControlCondition objects={objects} test={isMarker} control={MarkerShapeControl} />
             </div>
-            {/* Color swatch only for Text and Line AOE */}
-            <ControlCondition objects={objects} test={(x) => isText(x) || isLineZone(x)} control={ColorSwatchControl} />
+            {/* Color swatch */}
+            <ControlCondition objects={objects} test={(x) => isText(x) || x.type === ObjectType.Rect || x.type === ObjectType.Line || isGameLine(x)} control={ColorSwatchControl} />
             {/* TextOutlineControl removed - game doesn't support outline color */}
             <div className={mergeClasses(classes.row)}>
                 <OpacityControl objects={objects} className={classes.grow} />
@@ -134,7 +139,8 @@ const Controls: React.FC = () => {
             {/* Position/Size */}
             <ControlCondition objects={objects} test={isMoveable} control={PositionControl} />
             <ControlCondition objects={objects} test={isResizable} control={SizeControl} />
-            <ControlCondition objects={objects} test={isLineZone} control={LineSizeControl} />
+            {/* Line zones (Rect) now use SizeControl above */}
+            <ControlCondition objects={objects} test={isGameLine} control={GameLineLengthControl} />
 
             {/* TODO: change this to a two-column grid? */}
             <div className={mergeClasses(classes.row, classes.rightGap)}>
@@ -146,6 +152,7 @@ const Controls: React.FC = () => {
 
             <div className={mergeClasses(classes.row, classes.rightGap)}>
                 <ControlCondition objects={objects} test={isRotateable} control={RotationControl} />
+                <ControlCondition objects={objects} test={isGameLine} control={GameLineWidthControl} />
 
                 <ControlCondition objects={objects} test={isExaflareZone} control={ExaflareSpacingControl} />
                 <ControlCondition objects={objects} test={isStarburstZone} control={StarburstSpokeCountControl} />

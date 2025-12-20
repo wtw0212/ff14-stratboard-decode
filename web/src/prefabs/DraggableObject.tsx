@@ -110,8 +110,10 @@ function updatePosition(
         y: Math.max(0, Math.min(scene.arena.height, pos.y)),
     };
 
-    // If position was clamped, update the Konva node's visual position
-    if (clampedPos.x !== pos.x || clampedPos.y !== pos.y) {
+    // If position was snapped or clamped, update the Konva node's visual position
+    // This ensures the icon visually moves to the snapped position, not just the cursor
+    const originalScenePos = getSceneCoord(scene, e.target.position());
+    if (clampedPos.x !== originalScenePos.x || clampedPos.y !== originalScenePos.y) {
         const canvasPos = getCanvasCoord(scene, clampedPos);
         e.target.position(canvasPos);
     }

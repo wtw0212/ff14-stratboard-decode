@@ -1,6 +1,7 @@
 import React from 'react';
 import { MarkerArrow } from '../prefabs/Arrow';
 import { EnemyLarge, EnemyMedium, EnemySmall } from '../prefabs/Enemies';
+import { GameLine } from '../prefabs/GameLine';
 import { Waymark1, Waymark2, Waymark3, Waymark4, WaymarkA, WaymarkB, WaymarkC, WaymarkD } from '../prefabs/Markers';
 import {
     PartyAny,
@@ -89,6 +90,7 @@ export const PrefabsPanel: React.FC = () => {
                     <WaymarkD />
                 </ObjectGroup>
                 <ObjectGroup>
+                    <GameLine />
                     <Waymark1 />
                     <Waymark2 />
                     <Waymark3 />

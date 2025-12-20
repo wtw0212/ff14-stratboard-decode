@@ -30,6 +30,7 @@ export enum ObjectType {
     Enemy = 'enemy',
     Exaflare = 'exaflare',
     Eye = 'eye',
+    GameLine = 'gameLine', // Game's 0x0C line type (distinct from Line AOE zone)
     Icon = 'icon',
     Knockback = 'knockback',
     Line = 'line',
@@ -223,6 +224,16 @@ export interface IconObject extends ImageObject, NamedObject, BaseObject {
     readonly time?: number;
 }
 export const isIcon = makeObjectTest<IconObject>(ObjectType.Icon);
+
+// Game's 0x0C Line type (distinct from Line AOE zone)
+// Uses width/length/rotation like LineAOE for easier manipulation
+export interface GameLineObject extends MoveableObject, ColoredObject, RotateableObject, BaseObject {
+    readonly type: ObjectType.GameLine;
+    readonly width: number;      // Line thickness (2-10 in game, default 6)
+    readonly length: number;     // Line length in pixels
+}
+export const isGameLine = makeObjectTest<GameLineObject>(ObjectType.GameLine);
+
 
 export interface PartyObject extends ImageObject, NamedObject, BaseObject {
     readonly type: ObjectType.Party;
@@ -468,7 +479,7 @@ export function supportsStackCount<T>(object: T): object is StackCountObject & T
     return obj && typeof obj.count === 'number';
 }
 
-export type SceneObject = UnknownObject | Zone | Marker | Actor | IconObject | Tether;
+export type SceneObject = UnknownObject | Zone | Marker | Actor | IconObject | GameLineObject | Tether;
 
 export type SceneObjectWithoutId = Omit<SceneObject, 'id'> & { id?: number };
 
