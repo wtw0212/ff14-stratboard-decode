@@ -1,7 +1,7 @@
 /**
  * Vite plugin to inject git commit history at build time
  */
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 
 export interface GitCommit {
     hash: string;
@@ -14,20 +14,44 @@ export interface GitCommit {
 
 function getGitCommits(count: number = 20): GitCommit[] {
     try {
-        // Format: hash|short|date|subject|body
-        // We use --date=format to split date and time
-        const format = '%H|%h|%ad|%s|%b';
+        // Format: hash|short|date|time|subject|body
+        const format = '%H|%h|%ad||%s|%b';
         const separator = '---COMMIT---';
-        const result = execSync(
-            `git log -${count} --date=format:"%Y-%m-%d|%H:%M:%S" --format="${format}${separator}"`,
-            { encoding: 'utf-8', cwd: process.cwd() }
-        );
 
-        return result
+        const args = [
+            '--no-pager',
+            'log',
+            `-${count}`,
+            '--date=format:%Y-%m-%d|%H:%M:%S',
+            `--format=${format}${separator}`
+        ];
+
+        const output = spawnSync('git', args, {
+            encoding: 'utf-8',
+            cwd: process.cwd(),
+            timeout: 3000, // 3s timeout
+            killSignal: 'SIGKILL'
+        });
+
+        if (output.error) {
+            console.warn('Git log command failed or timed out:', output.error);
+            return [];
+        }
+
+        if (output.status !== 0) {
+            console.warn('Git log process exited with non-zero status:', output.stderr);
+            return [];
+        }
+
+        return output.stdout
             .split(separator)
             .filter(Boolean)
             .map((commit) => {
-                const [hash, shortHash, date, time, message, ...bodyParts] = commit.trim().split('|');
+                const parts = commit.trim().split('|');
+                // Ensure we have enough parts before destructuring
+                if (parts.length < 5) return null;
+
+                const [hash, shortHash, date, time, message, ...bodyParts] = parts;
                 return {
                     hash: hash || '',
                     shortHash: shortHash || '',
@@ -37,7 +61,7 @@ function getGitCommits(count: number = 20): GitCommit[] {
                     body: bodyParts.join('|').trim(),
                 };
             })
-            .filter((c) => c.hash); // Filter out empty entries
+            .filter((c): c is GitCommit => c !== null && !!c.hash);
     } catch (error) {
         console.warn('Failed to get git commits:', error);
         return [];
