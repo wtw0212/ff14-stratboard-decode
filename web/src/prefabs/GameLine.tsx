@@ -94,7 +94,8 @@ const OUTSET = 2;
 
 function getLength(object: GameLineObject, { pointerPos, activeHandleId }: HandleFuncProps) {
     if (pointerPos && activeHandleId === HandleId.Length) {
-        return Math.max(MIN_LENGTH, Math.round(distance(pointerPos) - OUTSET));
+        // Distance from center to pointer is half length, so multiply by 2
+        return Math.max(MIN_LENGTH, Math.round(distance(pointerPos) * 2 - OUTSET));
     }
     return object.length;
 }
@@ -127,12 +128,12 @@ const GameLineControlPoints = createControlPointManager<GameLineObject, GameLine
         const rotation = getRotation(object, handle);
 
         const x = width / 2;
-        const y = -length / 2;
+        const y = length / 2;
 
         return [
-            { id: HandleId.Length, style: HandleStyle.Square, cursor: getResizeCursor(rotation), x: 0, y: -length },
-            { id: HandleId.Width, style: HandleStyle.Diamond, cursor: getResizeCursor(rotation + 90), x: x, y: y },
-            { id: HandleId.Width, style: HandleStyle.Diamond, cursor: getResizeCursor(rotation + 90), x: -x, y: y },
+            { id: HandleId.Length, style: HandleStyle.Square, cursor: getResizeCursor(rotation), x: 0, y: -y },
+            { id: HandleId.Width, style: HandleStyle.Diamond, cursor: getResizeCursor(rotation + 90), x: x, y: 0 },
+            { id: HandleId.Width, style: HandleStyle.Diamond, cursor: getResizeCursor(rotation + 90), x: -x, y: 0 },
         ];
     },
     // Control point rotation should match renderer's 90° offset (0° = horizontal)
@@ -152,7 +153,7 @@ const GameLineControlPoints = createControlPointManager<GameLineObject, GameLine
             <>
                 <Rect
                     x={-width / 2}
-                    y={-length + strokeWidth}
+                    y={-length / 2}
                     width={width}
                     height={length}
                     stroke={CONTROL_POINT_BORDER_COLOR}
@@ -175,9 +176,9 @@ interface GameLineRendererProps extends RendererProps<GameLineObject> {
 const GameLineRenderer: React.FC<GameLineRendererProps> = ({ object, length, width, rotation, isDragging }) => {
     const highlightProps = useHighlightProps(object);
 
-    // Simple line rendering using Rect (same as LineZone)
+    // Simple line rendering using Rect
     const x = -width / 2;
-    const y = -length;
+    const y = -length / 2; // Centered
     const highlightOffset = 2;
     const highlightWidth = width + highlightOffset;
     const highlightLength = length + highlightOffset;
