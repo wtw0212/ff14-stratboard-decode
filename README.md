@@ -1,5 +1,7 @@
 # FF14 Strategy Board Codec
 
+**Live Version: [xivstrat.app](https://xivstrat.app/)**
+
 > **⚠️ ALPHA STATUS**: This project is under active development. Object type mappings are incomplete, and exported strategy codes may not render correctly in-game. Contributions and bug reports are welcome.
 
 ## Abstract
@@ -95,16 +97,17 @@ The `/web` directory contains a modified fork of [XIVPlan](https://github.com/jo
 ### Supported Object Types
 | Category | Types |
 |----------|-------|
-| Party Members | All jobs, generic roles (Tank, Healer, DPS, Melee, Ranged) |
-| Enemies | Small, Medium, Large, Huge, Circle |
-| Zones | Circle, Line, Cone, Donut, Arc, Stack, Tower, Eye, Starburst |
-| Markers | Waymarks A–D, 1–4, Arrow |
-| Mechanics | Knockback, Proximity |
+| Party Members | All jobs, generic roles (Tank, Healer, DPS, Melee, Ranged, etc.) |
+| Enemies | Small, Medium, Large, Huge, Circle AOE |
+| Zones | Circle, Line (Rect), Cone, Donut, Stack, Tower, Starburst, Moving AOE |
+| Icons | **GameLine (Tether/Line - 0x0C)**, Waymarks A–D, 1–4, Arrow |
+| Markers | Attack 1–8, Bind 1–3, Ignore 1–2, Signs (Square, Circle, Plus, Triangle) |
+| Mechanics | Knockback, Proximity, Eye (Gaze), Target Indicator |
 
-### Unsupported (Removed from UI)
-- Tethers (all types)
-- Polygon zones
-- Exaflare zones
+### Removed/Unsupported
+- Arc Zones (Removed from UI for game compatibility)
+- Polygon/Exaflare zones (Web-only)
+- Tethers (Use **GameLine** for 0x0C game-compatible tethers)
 
 ### Running Locally
 ```bash
@@ -134,17 +137,23 @@ npm run dev
 - 4-byte title alignment fix
 
 ### Phase 4: Web Integration [Alpha]
-- Modified XIVPlan fork
-- 512×384 canvas with top-left origin
-- "Export to Game" functionality
-- Debug mode for conversion inspection
+- Modified XIVPlan fork with 512×384 canvas
+- "Export to Game" functionality with automated base64/obfuscation
+- Automatic changelog generation from Git history
+- Adaptive UI (Dark/Light mode support)
 
-### Known Limitations (Alpha)
-- [x] Size/radius mapping for zones (formula: `radius_px = size × 2.47`)
+### Resolved Limitations
+- [x] Size/radius mapping for zones (`radius_px = size × 2.47`)
 - [x] Cone hitbox coordinate offset (bounding box center calculation)
-- [x] Cone arc expansion (now clockwise from rotation, matching game)
-- [ ] Narrow cone arcs (<90°) may have ~7px coordinate offset
-- [ ] Text objects not fully tested
+- [x] Cone arc expansion (clockwise synchronization)
+- [x] GameLine (0x0C) endpoint coordinate mapping (Start = Position, End = Param A/B)
+- [x] Grid snapping to intersections and mid-points
+- [x] Signed int16 rotation encoding (-180° to 180° range)
+- [x] Text object truncation safeguard (30 char limit)
+
+### Known Issues
+- [ ] Complex Z-indexing between mixed object types
+- [ ] Narrow cone arcs (<90°) may have ~2px coordinate offset in extreme cases
 
 ---
 
@@ -158,5 +167,7 @@ npm run dev
 Job, role, waymark, and enemy icons are © SQUARE ENIX CO., LTD. All Rights Reserved.
 
 ## License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for the full license text.
 
 This software is provided for educational and research purposes. Users are responsible for ensuring compliance with the terms of service of the target application.
