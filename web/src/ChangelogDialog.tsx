@@ -7,6 +7,7 @@ import {
     DialogTitle,
     DialogTrigger,
     makeStyles,
+    tokens,
     typographyStyles,
 } from '@fluentui/react-components';
 import { HistoryRegular } from '@fluentui/react-icons';
@@ -119,7 +120,7 @@ const useStyles = makeStyles({
     },
     body: {
         fontSize: '0.9em',
-        color: 'black',
+        color: tokens.colorNeutralForeground1,
         paddingLeft: '8px',
         borderLeft: '2px solid #444',
         whiteSpace: 'pre-wrap',

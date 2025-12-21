@@ -96,7 +96,7 @@ const Root: React.FC = () => {
             <div className={classes.root} onDragOver={onDragOver} onDrop={onDrop}>
                 <Toaster position="top" />
                 {showWarning && (
-                    <MessageBar intent="warning" style={{ gridArea: 'warning' }}>
+                    <MessageBar intent="error" style={{ gridArea: 'warning', backgroundColor: tokens.colorPaletteRedBackground3 }}>
                         <MessageBarBody>
                             ALPHA TESTING: This tool is under development. Elements may differ from the in-game appearance and errors may occur.
                         </MessageBarBody>
