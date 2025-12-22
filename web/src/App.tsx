@@ -4,7 +4,8 @@ import { HotkeysProvider } from 'react-hotkeys-hook';
 import { createBrowserRouter, createRoutesFromElements, Outlet, Route, RouterProvider } from 'react-router-dom';
 import { DirtyProvider } from './DirtyProvider';
 import { useSceneFromUrl } from './file/share';
-import { FileOpenPage } from './FileOpenPage';
+// Lazy-loaded routes for code splitting
+const FileOpenPage = React.lazy(() => import('./FileOpenPage').then(m => ({ default: m.FileOpenPage })));
 import { HelpProvider } from './HelpProvider';
 import { MainPage } from './MainPage';
 import { SceneProvider } from './SceneProvider';
@@ -119,7 +120,11 @@ const router = createBrowserRouter(
     createRoutesFromElements(
         <Route path="/" element={<Layout />}>
             <Route index element={<MainPage />} />
-            <Route path="open" element={<FileOpenPage />} />
+            <Route path="open" element={
+                <Suspense fallback={<LoadingFallback />}>
+                    <FileOpenPage />
+                </Suspense>
+            } />
         </Route>,
     ),
 );
