@@ -117,10 +117,10 @@ export default defineConfig(({ mode }) => ({
                 type: 'module',
             },
         }),
-        gitCommitsPlugin(),
+        gitCommitsPlugin({ count: 10 }),
     ],
     build: {
-        chunkSizeWarningLimit: 700, 
+        chunkSizeWarningLimit: 700,
         rollupOptions: {
             output: {
                 manualChunks: {

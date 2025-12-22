@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "git fetch --depth=20 origin main || true && tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "prettier:check": "prettier --check .",

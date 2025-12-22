@@ -68,9 +68,14 @@ function getGitCommits(count: number = 20): GitCommit[] {
     }
 }
 
-export function gitCommitsPlugin() {
+export interface GitCommitsOptions {
+    count?: number;
+}
+
+export function gitCommitsPlugin(options: GitCommitsOptions = {}) {
     const virtualModuleId = 'virtual:git-commits';
     const resolvedVirtualModuleId = '\0' + virtualModuleId;
+    const count = options.count ?? 10;
 
     return {
         name: 'git-commits',
@@ -81,7 +86,7 @@ export function gitCommitsPlugin() {
         },
         load(id: string) {
             if (id === resolvedVirtualModuleId) {
-                const commits = getGitCommits(30);
+                const commits = getGitCommits(count);
                 return `export const commits = ${JSON.stringify(commits, null, 2)};`;
             }
         },
