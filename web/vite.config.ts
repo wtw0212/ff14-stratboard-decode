@@ -120,12 +120,14 @@ export default defineConfig(({ mode }) => ({
         gitCommitsPlugin(),
     ],
     build: {
+        chunkSizeWarningLimit: 700, 
         rollupOptions: {
             output: {
                 manualChunks: {
                     'react-vendor': ['react', 'react-dom', 'react-router-dom'],
                     'konva-vendor': ['konva', 'react-konva', 'react-konva-utils'],
                     'fluentui-vendor': ['@fluentui/react-components'],
+                    'fluentui-icons': ['@fluentui/react-icons'],
                     'dnd-vendor': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/modifiers', '@dnd-kit/utilities'],
                 },
             },
