@@ -50,6 +50,7 @@ import { ZoneSquare } from '../prefabs/zone/ZoneRectangle';
 import { ZoneRotateClockwise, ZoneRotateCounterClockwise } from '../prefabs/zone/ZoneRotate';
 import { ZoneStack } from '../prefabs/zone/ZoneStack';
 import { ZoneTower } from '../prefabs/zone/ZoneTower';
+import { ZonePersonAoe1, ZonePersonAoe2, ZonePersonAoe3, ZonePersonAoe4 } from '../prefabs/zone/ZonePersonAoe';
 import { useControlStyles } from '../useControlStyles';
 import { ObjectGroup, Section } from './Section';
 
@@ -77,6 +78,11 @@ export const PrefabsPanel: React.FC = () => {
 
                     <ZoneTower />
                     <ZoneEye />
+
+                    <ZonePersonAoe1 />
+                    <ZonePersonAoe2 />
+                    <ZonePersonAoe3 />
+                    <ZonePersonAoe4 />
                 </ObjectGroup>
             </Section>
 

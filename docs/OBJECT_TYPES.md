@@ -263,6 +263,10 @@ Strategy codes use a block-based binary format. Each block follows the pattern:
 | Knockback | Outer radius | Unused | Unused | Unused |
 | Linear Knockback | Unused | Count | Unused | Unused |
 | Moving Circle AOE | Outer radius | Unused | Unused | Unused |
+| 1-Person AOE | Outer radius | Unused | Unused | Unused |
+| 2-Person AOE | Outer radius | Unused | Unused | Unused |
+| 3-Person AOE | Outer radius | Unused | Unused | Unused |
+| 4-Person AOE | Outer radius | Unused | Unused | Unused |
 
 ---
 

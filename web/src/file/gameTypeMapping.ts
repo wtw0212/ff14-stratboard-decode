@@ -713,6 +713,30 @@ function convertObject(
             }
         }
 
+        // Check for person AOE icons (/zone/ folder)
+        if (iconImage.includes('person-aoe') || iconImage.includes('zone/')) {
+            // Person AOE size formula (observed): size 50 = ~16px radius, size 100 = ~32px radius
+            // Ratio: radius = size * 0.32, so size = radius / 0.32
+            // For icons, we treat the icon width as the diameter, so radius = width / 2
+            const iconWidth = (obj as any).width || 48;
+            const radius = iconWidth / 2;
+            gameObj.scale = Math.round(radius / 0.32);
+
+            if (iconImage.includes('1-person')) {
+                gameObj.typeId = GAME_TYPES.one_person_aoe;
+                return gameObj;
+            } else if (iconImage.includes('2-person')) {
+                gameObj.typeId = GAME_TYPES.two_person_aoe;
+                return gameObj;
+            } else if (iconImage.includes('3-person')) {
+                gameObj.typeId = GAME_TYPES.three_person_aoe;
+                return gameObj;
+            } else if (iconImage.includes('4-person')) {
+                gameObj.typeId = GAME_TYPES.four_person_aoe;
+                return gameObj;
+            }
+        }
+
         // Check attack/bind/ignore/shape markers
         const markerId = MARKER_NAME_TO_ID[iconName];
         if (markerId !== undefined) {
@@ -1309,6 +1333,26 @@ function convertGameToSceneObject(gameObj: GameObject, idMap: Record<number, str
             image: highlightedShape.icon,
             width: 32,
             height: 32,
+        } as any;
+    }
+
+    // 8.5. Person AOE markers (1-4 person AOE: 0x7F-0x82)
+    const personAoeMap: Record<number, { name: string; icon: string }> = {
+        [GAME_TYPES.one_person_aoe]: { name: '1-Person AOE', icon: '/zone/1-Person-Aoe.webp' },
+        [GAME_TYPES.two_person_aoe]: { name: '2-Person AOE', icon: '/zone/2-Person-Aoe.webp' },
+        [GAME_TYPES.three_person_aoe]: { name: '3-Person AOE', icon: '/zone/3-Person-Aoe.webp' },
+        [GAME_TYPES.four_person_aoe]: { name: '4-Person AOE', icon: '/zone/4-Person-Aoe.webp' },
+    };
+
+    const personAoe = personAoeMap[gameObj.typeId];
+    if (personAoe) {
+        return {
+            ...base,
+            type: ObjectType.Icon,
+            name: personAoe.name,
+            image: personAoe.icon,
+            width: 48,
+            height: 48,
         } as any;
     }
 
