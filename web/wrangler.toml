@@ -1,4 +1,4 @@
-name = "xivplan"
+name = "ff14-strategyboard-decode"
 compatibility_date = "2024-12-23"
 pages_build_output_dir = "dist"
 

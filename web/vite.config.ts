@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react';
 import { UserConfig, defineConfig, loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import svgr from 'vite-plugin-svgr';
+import viteImagemin from 'vite-plugin-imagemin';
 import { gitCommitsPlugin } from './vite-plugin-git-commits';
 
 function getModeOptions(mode: string): UserConfig {
@@ -118,6 +119,17 @@ export default defineConfig(({ mode }) => ({
             },
         }),
         gitCommitsPlugin({ count: 10 }),
+        viteImagemin({
+            webp: {
+                quality: 85,
+            },
+            svgo: {
+                plugins: [
+                    { name: 'removeViewBox', active: false },
+                    { name: 'removeEmptyAttrs', active: false },
+                ],
+            },
+        }),
     ],
     build: {
         chunkSizeWarningLimit: 700,

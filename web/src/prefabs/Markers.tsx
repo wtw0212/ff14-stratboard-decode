@@ -252,11 +252,11 @@ const MarkerDetails: React.FC<ListComponentProps<MarkerObject>> = ({ object, ...
 
 registerListComponent<MarkerObject>(ObjectType.Marker, MarkerDetails);
 
-export const WaymarkA = makeIcon('Waymark A', 'waymark_a.png', 'circle', COLOR_MARKER_RED);
-export const WaymarkB = makeIcon('Waymark B', 'waymark_b.png', 'circle', COLOR_MARKER_YELLOW);
-export const WaymarkC = makeIcon('Waymark C', 'waymark_c.png', 'circle', COLOR_MARKER_BLUE);
-export const WaymarkD = makeIcon('Waymark D', 'waymark_d.png', 'circle', COLOR_MARKER_PURPLE);
-export const Waymark1 = makeIcon('Waymark 1', 'waymark_1.png', 'square', COLOR_MARKER_RED);
-export const Waymark2 = makeIcon('Waymark 2', 'waymark_2.png', 'square', COLOR_MARKER_YELLOW);
-export const Waymark3 = makeIcon('Waymark 3', 'waymark_3.png', 'square', COLOR_MARKER_BLUE);
-export const Waymark4 = makeIcon('Waymark 4', 'waymark_4.png', 'square', COLOR_MARKER_PURPLE);
+export const WaymarkA = makeIcon('Waymark A', 'waymark_a.webp', 'circle', COLOR_MARKER_RED);
+export const WaymarkB = makeIcon('Waymark B', 'waymark_b.webp', 'circle', COLOR_MARKER_YELLOW);
+export const WaymarkC = makeIcon('Waymark C', 'waymark_c.webp', 'circle', COLOR_MARKER_BLUE);
+export const WaymarkD = makeIcon('Waymark D', 'waymark_d.webp', 'circle', COLOR_MARKER_PURPLE);
+export const Waymark1 = makeIcon('Waymark 1', 'waymark_1.webp', 'square', COLOR_MARKER_RED);
+export const Waymark2 = makeIcon('Waymark 2', 'waymark_2.webp', 'square', COLOR_MARKER_YELLOW);
+export const Waymark3 = makeIcon('Waymark 3', 'waymark_3.webp', 'square', COLOR_MARKER_BLUE);
+export const Waymark4 = makeIcon('Waymark 4', 'waymark_4.webp', 'square', COLOR_MARKER_PURPLE);

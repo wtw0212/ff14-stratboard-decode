@@ -105,6 +105,6 @@ const EnemyDetails: React.FC<ListComponentProps<EnemyObject>> = ({ object, ...pr
 
 registerListComponent<EnemyObject>(ObjectType.Enemy, EnemyDetails);
 
-export const EnemySmall = makeIcon('Small enemy', 'enemy_small.png', SIZE_SMALL);
-export const EnemyMedium = makeIcon('Medium enemy', 'enemy_medium.png', SIZE_MEDIUM);
-export const EnemyLarge = makeIcon('Large enemy', 'enemy_large.png', SIZE_LARGE);
+export const EnemySmall = makeIcon('Small enemy', 'enemy_small.webp', SIZE_SMALL);
+export const EnemyMedium = makeIcon('Medium enemy', 'enemy_medium.webp', SIZE_MEDIUM);
+export const EnemyLarge = makeIcon('Large enemy', 'enemy_large.webp', SIZE_LARGE);

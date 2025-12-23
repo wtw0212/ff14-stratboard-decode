@@ -62,9 +62,11 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.4.0",
     "prettier": "^3.6.2",
+    "sharp": "^0.34.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.2",
     "vite": "^7.1.12",
+    "vite-plugin-imagemin": "^0.6.1",
     "vite-plugin-pwa": "^1.1.0",
     "vite-plugin-svgr": "^4.5.0"
   },
