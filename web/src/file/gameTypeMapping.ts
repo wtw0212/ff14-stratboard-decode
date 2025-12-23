@@ -309,6 +309,7 @@ const MARKER_NAME_TO_ID: Record<string, number> = {
     square: 0x4b,
     circle: 0x4c,
     plus: 0x4d,
+    cross: 0x4d,  // Alias for Plus
     triangle: 0x4e,
     // Lock-on markers
     'red lock-on': 0x83,
@@ -693,6 +694,25 @@ function convertObject(
     // Icon objects (Attack 1-8, Bind 1-3, Ignore 1-2, etc.)
     if (isIcon(obj)) {
         const iconName = obj.name?.toLowerCase() || '';
+        const iconImage = obj.image?.toLowerCase() || '';
+
+        // Check for highlighted markers (ultimate folder)
+        if (iconImage.includes('ultimate')) {
+            if (iconImage.includes('circle')) {
+                gameObj.typeId = GAME_TYPES.highlight_circle;
+                return gameObj;
+            } else if (iconImage.includes('cross')) {
+                gameObj.typeId = GAME_TYPES.highlight_x;
+                return gameObj;
+            } else if (iconImage.includes('square')) {
+                gameObj.typeId = GAME_TYPES.highlight_square;
+                return gameObj;
+            } else if (iconImage.includes('triangle')) {
+                gameObj.typeId = GAME_TYPES.highlight_triangle;
+                return gameObj;
+            }
+        }
+
         // Check attack/bind/ignore/shape markers
         const markerId = MARKER_NAME_TO_ID[iconName];
         if (markerId !== undefined) {
@@ -1272,7 +1292,27 @@ function convertGameToSceneObject(gameObj: GameObject, idMap: Record<number, str
         return { ...base, type: ObjectType.Marker, name: '' } as any;
     }
 
-    // 8. Text
+    // 8. Highlighted Shapes (Ultimate markers)
+    const highlightedShapeMap: Record<number, { name: string; icon: string }> = {
+        [GAME_TYPES.highlight_circle]: { name: 'Highlighted Circle', icon: '/marker/ultimate/circle.webp' },
+        [GAME_TYPES.highlight_x]: { name: 'Highlighted X', icon: '/marker/ultimate/cross.webp' },
+        [GAME_TYPES.highlight_square]: { name: 'Highlighted Square', icon: '/marker/ultimate/square.webp' },
+        [GAME_TYPES.highlight_triangle]: { name: 'Highlighted Triangle', icon: '/marker/ultimate/triangle.webp' },
+    };
+
+    const highlightedShape = highlightedShapeMap[gameObj.typeId];
+    if (highlightedShape) {
+        return {
+            ...base,
+            type: ObjectType.Icon,
+            name: highlightedShape.name,
+            image: highlightedShape.icon,
+            width: 32,
+            height: 32,
+        } as any;
+    }
+
+    // 9. Text
     if (gameObj.typeId === GAME_TYPES.text) {
         return {
             ...base,
@@ -1331,7 +1371,8 @@ export function getExportableStats(
             isStarburstZone(obj) ||
             isMarker(obj) ||
             isText(obj) ||
-            isGameLine(obj)  // Game's 0x0C line type
+            isGameLine(obj) ||  // Game's 0x0C line type
+            isIcon(obj)  // Icon objects (highlighted markers, attack/bind markers, etc.)
         ) {
             exportable++;
         } else {
